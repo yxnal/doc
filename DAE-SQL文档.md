@@ -634,7 +634,7 @@ Catalog表示一个数据来源，可以包含来自不同系统的数据库和�
 		        "name": "http_catalog",
 		        "uri": "http://ip:8080/http_catalog/",
 		        "user": "user",
-		        "password": "cGFzc3dvcmQ="
+		        "password": "*******"
 		    }
 		]
 
