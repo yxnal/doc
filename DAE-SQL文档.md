@@ -784,5 +784,158 @@ iceberg表3：（array->Array)
 #### 6.2.4 查询优化相关
 1.3.2版本会支持部分辅助数据下推
 
+### 6.3 HIVE对接
+jarvis初步支持读取HIVE表数据
+
+CREATE TABLE jarvis_hive_talbe (
+    foo UInt32, 
+    bar String,
+    city String) 
+ENGINE=HIVE('hive-server:10003','test','hive_table1','CSV') partition by city;
+
+HIVE中的参数含义为
+    参数1：hivemetastore url,
+    参数2：hive的db名
+    参数3：hive的table名
+    参数4：存储文件的格式，支持CSV/Parquet
+    支持分区表文件
+
+HIVE外表schema需要和hive表本身schema一致；
+### 6.4 HDFS对接
+jarvis支持读取写入HDFS外部表
+
+CREATE TABLE hdfs_engine_table (name String, value UInt32) ENGINE=HDFS('hdfs://hdfs1:9000/other_storage', 'CSV')
+
+HDFS中参数含义为
+    参数1：hdfs中文件夹的地址
+    参数2：文件类型,支持 CSV/Parquet
+
+读取、插入数据例子
+INSERT INTO hdfs_engine_table VALUES ('one', 1), ('two', 2), ('three', 3)
+SELECT * FROM hdfs_engine_table LIMIT 2
+
+
+### 6.5 MYSQL对接
+CREATE TABLE jarvis_mysql_talbe (
+    foo UInt32, 
+    bar String,
+    city String) 
+ENGINE=MySQL('host:port', 'database', 'table', 'user', 'password'[, replace_query, 'on_duplicate_clause']);
+​参数含义为
+    参数1：host:port — MySQL 服务器地址。
+    参数2：database — 数据库的名称。
+    参数3：table — 表名称。
+    参数4：user — 数据库用户。
+    参数5：password — 用户密码。
+    参数6：replace_query — 将 INSERT INTO 查询是否替换为 REPLACE INTO 的标志。如果 replace_query=1，则替换查询
+    参数7：'on_duplicate_clause' — 将 ON DUPLICATE KEY UPDATE 'on_duplicate_clause' 表达式添加到 INSERT 查询语句中。例如：impression = VALUES(impression) + impression。如果需要指定 'on_duplicate_clause'，则需要设置 replace_query=0。如果同时设置 replace_query = 1 和 'on_duplicate_clause'，则会抛出异常。
+
+此时，简单的 WHERE 子句（例如 =, !=, >, >=, <, <=）是在 MySQL 服务器上执行。
+其余条件以及 LIMIT 采样约束语句仅在对MySQL的查询完成后才在Jarvis中执行。
+MySQL 引擎不支持 可为空 数据类型，因此，当从MySQL表中读取数据时，NULL 将转换为指定列类型的默认值（通常为0或空字符串）。
+
+
+### 6.6 MongoDB对接
+MongoDB 外表引擎是只读表引擎，允许从远程 MongoDB 集合中读取数据(SELECT查询)。引擎只支持非嵌套的数据类型。不支持 INSERT 查询。
+
+CREATE TABLE [IF NOT EXISTS] [db.]table_name
+(
+    name1 [type1],
+    name2 [type2],
+    ...
+) ENGINE = MongoDB(host:port, database, collection, user, password);
+
+​参数含义为
+    参数1：host:port — MongoDB 服务器地址.
+    参数2：database — 数据库名称.
+    参数3：collection — 集合名称.
+    参数4：user — MongoDB 用户.
+    参数5：password — 用户密码.
+
+### 6.7 S3对接
+CREATE TABLE s3_engine_table (
+    name String, 
+    value UInt32)
+ENGINE = S3(path, [aws_access_key_id, aws_secret_access_key,] format, [compression])
+​参数含义为
+    参数1：path — 带有文件路径的 Bucket url。在只读模式下支持以下通配符: *, ?, {abc,def} 和 {N..M} 其中 N, M 是数字, 'abc', 'def' 是字符串. 更多信息见下文.
+    参数2：format — 文件的格式.
+    参数3：aws_access_key_id, aws_secret_access_key - AWS 账号的长期凭证. 你可以使用凭证来对你的请求进行认证.参数是可选的. 如果没有指定凭据, 将从配置文件中读取凭据. 更多信息参见 使用 S3 来存储数据.
+    参数4：compression — 压缩类型. 支持的值: none, gzip/gz, brotli/br, xz/LZMA, zstd/zst. 参数是可选的. 默认情况下，通过文件扩展名自动检测压缩类型.
+
+读取、插入数据例子
+INSERT INTO s3_engine_table VALUES ('one', 1), ('two', 2), ('three', 3);
+SELECT * FROM s3_engine_table LIMIT 2;
+
+### 6.8 Kafka对接
+CREATE TABLE kafka_engine_table (
+    name String, 
+    value UInt32)
+ENGINE = Kafka(kafka_broker_list, kafka_topic_list, kafka_group_name, kafka_format
+      [, kafka_row_delimiter, kafka_schema, kafka_num_consumers])
+
+必要参数：
+    kafka_broker_list – 以逗号分隔的 brokers 列表 (localhost:9092)。
+    kafka_topic_list – topic 列表 (my_topic)。
+    kafka_group_name – Kafka 消费组名称 (group1)。如果不希望消息在集群中重复，请在每个分片中使用相同的组名。
+    kafka_format – 消息体格式。使用与 SQL 部分的 FORMAT 函数相同表示方法，例如 JSONEachRow。了解详细信息，请参考 Formats 部分。
+
+可选参数：
+    kafka_row_delimiter - 每个消息体（记录）之间的分隔符。
+    kafka_schema – 如果解析格式需要一个 schema 时，此参数必填。例如，普罗托船长 需要 schema 文件路径以及根对象 schema.capnp:Message 的名字。
+    kafka_num_consumers – 单个表的消费者数量。默认值是：1，如果一个消费者的吞吐量不足，则指定更多的消费者。消费者的总数不应该超过 topic 中分区的数量，因为每个分区只能分配一个消费者。
+
+### 6.9 PostgreSQL对接
+PostgreSQL 引擎允许 jarvis 对存储在远程 PostgreSQL 服务器上的数据执行 SELECT 和 INSERT 查询.
+
+CREATE TABLE [IF NOT EXISTS] [db.]table_name [ON CLUSTER cluster]
+(
+    name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1] [TTL expr1],
+    name2 [type2] [DEFAULT|MATERIALIZED|ALIAS expr2] [TTL expr2],
+    ...
+) ENGINE = PostgreSQL('host:port', 'database', 'table', 'user', 'password'[, `schema`]);
+
+​参数含义为
+    host:port — PostgreSQL 服务器地址.
+    database — 数据库名称.
+    table — 表名称.
+    user — PostgreSQL 用户.
+    password — 用户密码.
+    schema — Non-default table schema. 可选.
+
+创建、select 例子
+CREATE TABLE default.postgresql_table
+(
+    `float_nullable` Nullable(Float32),
+    `str` String,
+    `int_id` Int32
+)
+ENGINE = PostgreSQL('localhost:5432', 'public', 'test', 'postges_user', 'postgres_password');
+SELECT * FROM postgresql_table WHERE str IN ('test');
+
+### 6.10 EmbeddedRocksDB对接
+CREATE TABLE [IF NOT EXISTS] [db.]table_name [ON CLUSTER cluster]
+(
+    name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1],
+    name2 [type2] [DEFAULT|MATERIALIZED|ALIAS expr2],
+    ...
+) ENGINE = EmbeddedRocksDB PRIMARY KEY(primary_key_name)
+
+必要参数:
+    primary_key_name – any column name in the column list.
+    必须指定 primary key, 仅支持主键中的一个列. 主键将被序列化为二进制的rocksdb key.
+    主键以外的列将以相应的顺序在二进制中序列化为rocksdb值.
+    带有键 equals 或 in 过滤的查询将被优化为从 rocksdb 进行多键查询.
+
+例子
+CREATE TABLE test
+(
+    `key` String,
+    `v1` UInt32,
+    `v2` String,
+    `v3` Float32,
+)
+ENGINE = EmbeddedRocksDB
+PRIMARY KEY key
 
 ​	
