@@ -7,190 +7,191 @@
 1. 快速入门案例
 ---------
 
-**1.1.功能简介**
-	Jarvis sql是一款面向大数据的、旨在提供对结构化数据使用SQL语句进行查询、分析、统计等功能的单机计算引擎，提供了数据导入/导出能力。
+# 快速入门 Blackhole SQL功能
+----
+Blackhole SQL是一款面向大数据的、旨在提供对结构化数据使用SQL语句进行查询、分析、统计等功能的单机计算引擎，提供了数据导入、导出能力，和Blackhole的其他两大模块DataFrame和ML能够无缝对接。  
+## Blackhole环境准备
+**CodeLab平台默认不安装Blackhole，请先到导航左边“包管理”页面安装blackhole。**  
+**这个文档简单介绍了Blackhole数据分析的常用接口，更多关于blackhole使用方法和案例，请参考[Blackhole简介和基本用法](https://cloud.baidu.com/doc/BML/s/9khemrnv7)。**
 
-   **1.2 应用场景**
-   主要应用场景包括如下：
+# SQL引擎使用方式
 
-（1）数据存储和查询
+下面将介绍SQL引擎基本功能的使用方式，目前SQL引擎支持python api,用户可以通过编写python程序实现和引擎的交互。
 
-（2）业务数据数据统计
+## 1.导入SQL依赖
+  本教程将使用以下方式导入SQL依赖:
 
-（3）业务行为统计和分析
 
-（4）日志分析
+```python
+import blackhole as bh
+```
 
-（5）商业智能/多维度分析\查询
+## 2.建表并导入数据
+我们先生成如下一份数据文件"test.csv", 数据每行包含3个字段:  
+  
+  
+|  列名   | 说明  | 类型  |
+|  ----  | ----  | ----  |
+|  user | 姓名 | String |
+| age | 年龄 | Int32 |
+| fee  | 费用 | Float32 |
 
-  **1.3 常用SQL分析场景举例**
-		假设存在两份数据events.csv，users.csv，分别记录了用户的访问、下单和购买信息以及用户的个人信息，下面从不同的分析场景举例来说明如何使用SQL引擎进行常用的用户行为分析。
 
-events.csv的数据格式如下：
+```python
+import os
+data_path='./test.csv'
+file = open(data_path, 'w+')
+file.write('''Tom,32,13205.0
+              Jack,31,14523.0
+              Herry,28,9845.0
+              Bob,43,28314.0
+              Alice,23,7854.0''')
+file.close()
+```
 
-    1,83,pay_order,2021-04-09 01:13:20,sp_19819,85.01
-    2,1,pay_order,2021-04-08 09:52:18,sp_55012,50.97
-    3,72,add_cart,2021-04-06 05:39:10,sp_1044,0.0
-    4,73,visit,2021-04-07 14:28:30,sp_14826,0.0
-    5,53,visit,2021-04-10 08:28:59,sp_38361,0.0
-    6,94,pay_order,2021-04-05 22:19:46,sp_79211,5.19
+建表前为了保证数据不受污染,首先清理可能存在的同名的表,代码如下:
 
-...
 
+```python
+table_name='test'
+sql='drop table if exists %s' % table_name
+bh.sql(sql)
+```
 
 
-users.csv的数据内容如下：
 
-    1,2,z6s5g0duce,28,1,长春
-    2,2,t+nhd2scbv,18,1,南京
-    3,4,4u8dmz+xgh,27,1,长沙
-    4,1,r4y5ti16j+,60,1,广州
-    5,2,ilgt53hb7c,62,2,兰州
 
-...
+    <blackhole.sql.dataset.dataset.Dataset at 0x7f1de42207d0>
 
 
 
-代码如下：
+下面我们将使用上面代码生成的数据文件来建表并导入数据,表名称为'test',代码如下:  
 
-    import blackhole as bh
-    schema_events = '''
-    	event_id Int64,
-    	user_id Int32, 
-    	event Enum('visit'=1,'add_cart'=2,'pay_order'=3), 
-    	time DateTime,
-    	item_id String,
-    	fee Float32 
-    '''
-    schema_users = '''
-        user_id Int32,
-        equip Enum('android'=1,'ios'=2,'wm'=3,'pc'=4),
-        user_name String,
-        age Int8,
-        gender Enum('男'=1,'女'=2),
-        city String
-    '''
-    format = 'CSV'
-    table_events = 'events'
-    table_users = 'users'
 
+```python
+data_schema = '''user String,age Int32,fees Float32'''
+ds = bh.sql("create table if not exists {} ({}) Engine=MergeTree() order by tuple()".format(table_name, data_schema))
+```
 
+## 3.查看表并导入数据
 
-1.3.1 先清理环境
 
-    drop_events_table = 'drop table if exists %s' % table_events
-    drop_users_table = 'drop table if exists %s' % table_users
-    bh.sql(drop_events_table)
-    bh.sql(drop_users_table)
-    sql = '''SELECT * FROM file('events.csv', 'CSV', "%s")''' % schema_events
-    bh.sql(sql).show()
+```python
+bh.sql("show tables").show()
+```
 
-1.3.2 建表并导入数据
+    name
+    ------
+    test
 
-    bh.sql("create table if not exists {} ({}) Engine=MergeTree() order by tuple()".format(table_events, schema_events)).show()
-    
-    bh.sql("insert into table {} from infile '{}' format CSV".format(table_events, "/****/***/data/events.csv")).show()
-    
-    bh.sql("create table if not exists {} ({}) Engine=MergeTree() order by tuple()".format(table_users, schema_users)).show()
-    
-    bh.sql("insert into table {} from infile '{}' format CSV".format(table_users, "/****/***/data/users.csv")).show()
 
-1.3.3 日访问量(PV统计)
 
-    sql_pv = '''SELECT count() as "今日PV" FROM events as t
-    WHERE toDate(t.time)=today() AND t.event='visit' '''
-    bh.sql(sql_pv).show()
+```python
+bh.sql("insert into table {} from infile '{}' format CSV".format(table_name, data_path))
+```
 
 
 
-1.3.4 日活用户量(UV统计)
 
-    sql_uv = '''SELECT count(DISTINCT t.user_id) as "今日UV" FROM events as t
-    WHERE toDate(t.time)=today() AND t.event='visit' '''
-    bh.sql(sql_uv).show()
+    <blackhole.sql.dataset.dataset.Dataset at 0x7f1de41a6950>
 
 
-1.3.5 最近7天日活
 
-    sql_7days_uv = '''SELECT toString(toDate(t.time)) as "日期", count(DISTINCT t.user_id) as "当日UV" FROM events as t
-    WHERE t.event='visit' AND toDate(t.time) BETWEEN today()-7 AND today()
-    GROUP BY toDate(t.time)'''
-    bh.sql(sql_7days_uv).show()
+## 4.开始查询
+表建好之后便可以对表中的数据进行各种查询了
+  ### 4-1.全量查询表中的数据
 
 
+```python
+bh.sql('select * from test').show()
+```
 
-1.3.6 今天分时活跃数
+    user      age    fees
+    ------  -----  ------
+    Tom        32   13205
+    Jack       31   14523
+    Herry      28    9845
+    Bob        43   28314
+    Alice      23    7854
 
-    sql_time_uv = '''SELECT toHour(t.time) as "时段", count(DISTINCT t.user_id) as "小时UV" FROM events as t
-    WHERE t.event='visit' AND toDate(t.time)=today()
-    GROUP BY toHour(t.time)'''
-    bh.sql(sql_time_uv).show()
 
+  ### 4-2.设置条件进行查询(过滤)
 
 
-1.3.7 查询每天上午 10 点至 11 点的下单用户数
+```python
+bh.sql('select * from test where fees < 10000.0 limit 2').show()
+```
 
-    sql_10_11_up = '''SELECT toString(toDate(t.time)) as "日期", count(DISTINCT t.user_id) as "下单用户数" FROM events as t
-    WHERE t.event='add_cart' AND EXTRACT(HOUR FROM t.time) IN (10,11)
-    GROUP BY toDate(t.time)'''
-    bh.sql(sql_10_11_up).show()
+    user      age    fees
+    ------  -----  ------
+    Herry      28    9845
+    Alice      23    7854
 
 
-1.3.8 查询来自某个城市的用户有多少
+  ### 4-3.对某列求和/求算术平均/最大/最小值
 
-    sql_city_users = '''SELECT t.city as "城市", count(t.user_id) as "用户数" FROM users as t
-    GROUP BY t.city'''
-    bh.sql(sql_city_users).show()
 
+```python
+bh.sql('select sum(fees) from test').show()
+bh.sql('select avg(age) from test').show()
+bh.sql('select min(age) from test').show()
+bh.sql('select max(fees) from test').show()
+```
 
+      sum(fees)
+    -----------
+          73741
+      avg(age)
+    ----------
+          31.4
+      min(age)
+    ----------
+            23
+      max(fees)
+    -----------
+          28314
 
-1.3.9 漏斗分析 visit（访问）—add_cart（下单）—pay_order（支付）（窗口期 48 小时且严格满足事件先后顺序
 
-    sql_vap_analyze = ''' SELECT count(DISTINCT t.user_id) as "全流程用户数" FROM
-    (
-    SELECT user_id, windowFunnel(172800)(time, event='visit',event='add_cart',event='pay_order') as level
-    FROM events
-    GROUP BY user_id
-    ) as t WHERE t.level=3 '''
-    bh.sql(sql_vap_analyze).show()
+  ### 4-4.排序
 
 
+```python
+bh.sql('select * from test order by age desc').show()
+```
 
+    user      age    fees
+    ------  -----  ------
+    Bob        43   28314
+    Tom        32   13205
+    Jack       31   14523
+    Herry      28    9845
+    Alice      23    7854
 
-1.3.10 统计连续3(n)天访问的用户数
 
-    sql_3days_continues_visit = ''' SELECT count(t2.user_id) as "连续3天访问用户数" FROM
-    (
-    SELECT user_id, windowFunnel(3)(t.dt, runningDifference(t.dt)=1, runningDifference(t.dt)=1) as level FROM
-    (
-    SELECT user_id, toDate(time) as dt FROM events ORDER BY user_id, time
-    ) as t GROUP BY t.user_id
-    ) as t2 WHERE t2.level=2 '''
-    bh.sql(sql_3days_continues_visit).show()
+  ### 4-5.聚合
 
 
+```python
+bh.sql('select user, max(fees) from test group by user').show()
+```
 
-1.3.11 统计过去3天内浏览最多的3件商品
+    user      max(fees)
+    ------  -----------
+    Alice          7854
+    Tom           13205
+    Herry          9845
+    Bob           28314
+    Jack          14523
 
-    sql_top_sp_in_3_days = ''' SELECT topK(3)(t.item_id) as res FROM events as t WHERE t.event='visit' AND toDate(now()) - toDate(t.time) <=3 '''
-    bh.sql(sql_top_sp_in_3_days).show()
 
+  ### 4-6.查询结果导出到文件
+目前导出的文件格式为tsv(即以tab符分隔字段的文件)
+```python
+bh.sql("select age, sum(fees) from test group by age into outfile './result.tsv' format TSV").show()
+```
 
 
-
-1.3.12 统计过去3天内消费最多的3位用户
-
-    sql_top_user_in_3_days = ''' SELECT t.user_id, t.fees as res FROM
-    (
-    SELECT user_id, sum(fee) as fees from events WHERE toDate(now()) - toDate(events.time) <=3 GROUP BY user_id
-    ) as t ORDER BY res DESC limit 3 '''
-    bh.sql(sql_top_user_in_3_days).show()
-
-
-
-以上例子几乎涵盖了绝大部分用户行为分析的场景，当然用法不止上面这些，还有一些变通的用法，这里这是举例说明如何使用SQL引擎
-
-##2. 基本功能介绍
+## 2. 基本功能介绍
 ### 2.1 数据类型定义
 #### 2.1.1 数值类型
 **2.1.1.1 Int类型**
