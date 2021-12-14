@@ -4,20 +4,14 @@
 # SQL 功能介绍&使用手册
 数据导入、数据查询、表操作等 CK 常见和最可能被用户用到的 基础功能
 
-1. 快速入门案例
----------
+## 1. 快速入门案例
 
-# 快速入门 Blackhole SQL功能
-----
 Blackhole SQL是一款面向大数据的、旨在提供对结构化数据使用SQL语句进行查询、分析、统计等功能的单机计算引擎，提供了数据导入、导出能力，和Blackhole的其他两大模块DataFrame和ML能够无缝对接。  
-## Blackhole环境准备
-**CodeLab平台默认不安装Blackhole，请先到导航左边“包管理”页面安装blackhole。**  
-**这个文档简单介绍了Blackhole数据分析的常用接口，更多关于blackhole使用方法和案例，请参考[Blackhole简介和基本用法](https://cloud.baidu.com/doc/BML/s/9khemrnv7)。**
-
 
 下面将介绍SQL引擎基本功能的使用方式，目前SQL引擎支持python api,用户可以通过编写python程序实现和引擎的交互。
 
-## 1.导入SQL依赖
+### 1.1 导入SQL依赖
+
   本教程将使用以下方式导入SQL依赖:
 
 
@@ -25,10 +19,11 @@ Blackhole SQL是一款面向大数据的、旨在提供对结构化数据使用S
 import blackhole as bh
 ```
 
-## 2.建表并导入数据
+### 1.2 建表并导入数据
+
 我们先生成如下一份数据文件"test.csv", 数据每行包含3个字段:  
-  
-  
+
+
 |  列名   | 说明  | 类型  |
 |  ----  | ----  | ----  |
 |  user | 姓名 | String |
@@ -68,18 +63,21 @@ ds = bh.sql("create table if not exists {} ({}) Engine=MergeTree() order by tupl
 ```
 
 建表有如下几种方式：
-#### 方式1
+* 方式1
+
 	CREATE TABLE [IF NOT EXISTS] [db.]table_name 
 	(
-    	name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1],
-    	name2 [type2] [DEFAULT|MATERIALIZED|ALIAS expr2],
-    	...
+		name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1],
+		name2 [type2] [DEFAULT|MATERIALIZED|ALIAS expr2],
+		...
 	) ENGINE = engine
 
-#### 方式2
+* 方式2
+
 	CREATE TABLE [IF NOT EXISTS] [db.]table_name AS [db2.]name2 [ENGINE = engine]
 
-#### 方式3
+* 方式3
+
 	CREATE TABLE [IF NOT EXISTS] [db.]table_name ENGINE = engine AS SELECT ...
 
 其中ENGINE一般指定为MergeTree()，并且还需要指定排序键，例如：
@@ -90,10 +88,9 @@ ds = bh.sql("create table if not exists {} ({}) Engine=MergeTree() order by tupl
 
 	ENGINE=MergeTree() order by tuple()
 
-#### 注
-1.3.2版本之后建表不再需要指定ENGINE和排序键了，默认会按照MergeTree引擎建表。
+注：1.3.2版本之后建表不再需要指定ENGINE和排序键了，默认会按照MergeTree引擎建表。
 
-## 3.查看表并导入数据
+### 1.3 查看表并导入数据
 
 
 ```python
@@ -111,17 +108,20 @@ bh.sql("insert into table {} from infile '{}' format CSV".format(table_name, dat
 ```
 
 导入数据有如下几种方式：
-#### 方式1
+* 方式1
+
 	INSERT INTO [db.]table [(c1, c2, c3)] VALUES (v11, v12, v13), ...
 
-#### 方式2
+* 方式2
+
 	INSERT INTO [db.]table [(c1, c2, c3)] SELECT ...
-	
-#### 方式3
+
+* 方式3
+
 	INSERT INTO [db.]table from infile 'path/filename' Format [CSV|Parquet]
 
+### 1.4 开始查询
 
-## 4.开始查询
 表建好之后便可以对表中的数据进行各种查询了，查询语句的一般形式为：
 
 	SELECT [DISTINCT] expr_list
@@ -140,8 +140,7 @@ bh.sql("insert into table {} from infile '{}' format CSV".format(table_name, dat
 	    [FORMAT format]
 	    [LIMIT n BY columns]
 
-
-  ### 4-1.全量查询表中的数据
+#### 1.4.1 全量查询表中的数据
 
 
 ```python
@@ -156,8 +155,7 @@ bh.sql('select * from test').show()
     Bob        43   28314
     Alice      23    7854
 
-
-  ### 4-2.设置条件进行查询(过滤)
+#### 1.4.2 设置条件进行查询(过滤)
 
 
 ```python
@@ -169,8 +167,7 @@ bh.sql('select * from test where fees < 10000.0 limit 2').show()
     Herry      28    9845
     Alice      23    7854
 
-
-  ### 4-3.对某列求和/求算术平均/最大/最小值
+#### 1.4.3 对某列求和/求算术平均/最大/最小值
 
 
 ```python
@@ -193,8 +190,7 @@ bh.sql('select max(fees) from test').show()
     -----------
           28314
 
-
-  ### 4-4.排序
+#### 1.4.4 排序
 
 
 ```python
@@ -209,8 +205,7 @@ bh.sql('select * from test order by age desc').show()
     Herry      28    9845
     Alice      23    7854
 
-
-  ### 4-5.聚合
+#### 1.4.5 聚合
 
 
 ```python
@@ -225,8 +220,8 @@ bh.sql('select user, max(fees) from test group by user').show()
     Bob           28314
     Jack          14523
 
+#### 1.4.6 查询结果导出到文件
 
-  ### 4-6.查询结果导出到文件
 目前导出的文件格式为tsv(即以tab符分隔字段的文件)
 ```python
 bh.sql("select age, sum(fees) from test group by age into outfile './result.tsv' format TSV").show()
@@ -887,7 +882,7 @@ CREATE TABLE [IF NOT EXISTS] [db.]table_name
     ...
 ) ENGINE = MongoDB(host:port, database, collection, user, password);
 
-​参数含义为
+参数含义为
     参数1：host:port — MongoDB 服务器地址.
     参数2：database — 数据库名称.
     参数3：collection — 集合名称.
@@ -937,7 +932,7 @@ CREATE TABLE [IF NOT EXISTS] [db.]table_name [ON CLUSTER cluster]
     ...
 ) ENGINE = PostgreSQL('host:port', 'database', 'table', 'user', 'password'[, `schema`]);
 
-​参数含义为
+参数含义为
     host:port — PostgreSQL 服务器地址.
     database — 数据库名称.
     table — 表名称.
