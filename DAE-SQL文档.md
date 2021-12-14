@@ -48,8 +48,7 @@ file.close()
 
 ```python
 table_name='test'
-sql='drop table if exists %s' % table_name
-bh.sql(sql)
+bh.sql('drop table if exists {tablename}')
 ```
 
 
@@ -59,7 +58,7 @@ bh.sql(sql)
 
 ```python
 data_schema = '''user String,age Int32,fees Float32'''
-ds = bh.sql("create table if not exists {} ({}) Engine=MergeTree() order by tuple()".format(table_name, data_schema))
+ds = bh.sql("create table if not exists {table_name} ({data_schema}) Engine=MergeTree() order by tuple()")
 ```
 
 
@@ -77,7 +76,7 @@ bh.sql("show tables").show()
 
 
 ```python
-bh.sql("insert into table {} from infile '{}' format CSV".format(table_name, data_path))
+bh.sql("insert into table {table_name} from infile '{path}' format CSV", path=data_path)
 ```
 
 
