@@ -657,65 +657,11 @@ cache模块旨在通过缓存方式提升离线分析的性能，解决以下问
     expensive_cal(1, 2)
     
     # 说明：当函数的入参、函数体、函数依赖的外部变量以及函数依赖的外部函数，任意一项发生变化时，则函数cahce会miss，并重新缓存，以保证函数结果的准确。
-## 5.  Catalog
-### 5.1 Catalog的定义
-待分析的数据，可能分布在HIVE、HDFS、MySQL、BOS等不同的系统中。Catalog功能，可帮用户管理外部可用的数据库和表的目录结构，给用户一个全局的数据视图，在引入外部数据和联邦查询中有重要作用。
-Catalog功能有三个功能：可以解耦数据提供方和使用方；可以简化数据使用流程；可以避免直接配置密码、避免安全问题。
-Catalog表示一个数据来源，可以包含来自不同系统的数据库和表，比如customer_catalog表示分析用户购买行为相关的数据源，其中包含来自MySQL的order_db和HIVE的customer_history_info_db等，通过联合分析MySQL order_db.order_list和HIVE customer_history_info_db.show_list来分析用户的喜好。所有分析师，只需要**配置Catalog源**的信息（比如http server的访问信息），就能看到这些数据库和表，就可以：**展示Catalog包含的Databases和Tables**，**从Catalog源导入某Database或Table** 到Jarvis里做分析。
-        
-### 5.2 配置Catalog源
-	        Catalog源的配置文件，是Jarvis的运行目录下的.jarvis/catalog_conf.json文件。首次启动，会产生空文件。用户可以配置不同类型（http/bos/local/hdfs等）的Catalog源(注意：目前只重点支持了http类型）。
-	      .jarvis/catalog_conf.json内容：
-	      
-		[
-		    {
-		        "type": "http",
-		        "name": "http_catalog",
-		        "uri": "http://ip:8080/http_catalog/",
-		        "user": "user",
-		        "password": "*******"
-		    }
-		]
 
-说明：Catalog源提前放置到Nginx服务的指定目录下（如http_catalog)，具体内容按catalog name/database name/table & conn_info.json三层来组织，具体目录内容由数据提供方来维护，使用方不需要了解这些细节： table里面写表的table的schema,  \t 作为name 和类型的分隔符，不同列间用\n分隔，比如
-
-    #用户不需要关注如下细节：
-    #catalog/database/table1:  
-    col1 \t  Int32,
-    col2 \t String
-    
-    # catalog/database/conn_info.json写这些table的连接信息，格式如:
-    {
-        "type": "BOS", #或HIVE/Iceberg/MySQL/..
-        "host_port": "http://ip:port/",
-        "format": {
-              "taxi": "CSV",
-    	      "iris": "Parquet"
-        }
-    }
-
-### 5.3 展示Catalog包含的Databases和Tables
-catalog在database上一级，SHOW命令：
-		
-		bh.sql("SHOW DATABASES FROM http_catalog") 
-		bh.sql("SHOW TABLES FROM http_catalog.db1") 
-		bh.sql("DESC http_catalog.db1.table1") 
-
-### 5.4 从Catalog源导入Database或Table
-
-		bh.sql("CREATE DATABASE mydb1 FROM http_catalog.db1")
-		bh.sql("CREATE TABLE mytable1 FROM http_catalog.db1.table1')")
-
-导入后，可以按本地库或表一样访问外部数据： （但数据仍然在远端数据源，可结合cache把远端数据源缓存在本地、来加快查询速度）
-		
-		bh.sql("SHOW TABLES FROM mydb1")
-		bh.sql("SELECT * FROM mytable1")
-		bh.sql("DROP mydb1")
-
-
-## 6. 外部数据对接
-### 6.1 DAE数据对接
-DAE数据，可以认为是一种特殊形式的catalog，catalog内置在Jarvis中。使用方式如下：
+## 5. 外部数据对接
+### 5.1 DAE数据对接 
+本节只针对安装了DAE集群组件的用户，DAE单机用户请忽略。
+DAE集群的数据，可以认为是一种特殊形式的catalog，catalog内置在Jarvis中。使用方式如下：
 
 
     bh.sql("show catalogs").show()
@@ -743,10 +689,10 @@ DAE数据，可以认为是一种特殊形式的catalog，catalog内置在Jarvis
     
     *说明：除了create database 也可以单独创建一张表：bh.sql("create table my_tb1 from dae.db1.table1").show()
 
-### 6.2 Iceberg对接
-#### 6.2.1 iceberg-catalog支持
+### 5.2 Iceberg对接
+#### 5.2.1 iceberg-catalog支持
 	可以通过catalog支持iceberg库、表的建立
-#### 6.2.2 使用方式
+#### 5.2.2 使用方式
    spark iceberg原生表：
 
     CREATE TABLE local.db.sc1 (
@@ -766,7 +712,7 @@ jarvis 对应的表建立语句：
 	param4：iceberg原生table名
 	param5：type，分为FE/HADOOP，其中FE是支持DAE、HADOOP为spark-hadoop模式表
 
-#### 6.2.3 嵌套格式支持
+#### 5.2.3 嵌套格式支持
 目前支持iceberg的nested，map，array以及他们的组合格式，例子如下所示：
 iceberg表1：
 
@@ -822,10 +768,10 @@ iceberg表3：（array->Array)
 		point Array(Int64)) 
 	ENGINE=Iceberg('hdfs://localhost:8020/user/hive/warehouse/', 'Parquet','db','s4','HADOOP')
 
-#### 6.2.4 查询优化相关
+#### 5.2.4 查询优化相关
 1.3.2版本会支持部分辅助数据下推
 
-### 6.3 HIVE对接
+### 5.3 HIVE对接
 jarvis初步支持读取HIVE表数据
 
     bh.sql("CREATE TABLE jarvis_hive_talbe (foo UInt32,bar String,city String) ENGINE=HIVE('hive-server:10003','test','hive_table1','CSV') partition by city;
@@ -838,7 +784,7 @@ jarvis初步支持读取HIVE表数据
         支持分区表文件
 
     HIVE外表schema需要和hive表本身schema一致；
-### 6.4 HDFS对接
+### 5.4 HDFS对接
 jarvis支持读取写入HDFS外部表
 
     bh.sql("CREATE TABLE hdfs_engine_table (name String, value UInt32) ENGINE=HDFS('hdfs://hdfs1:9000/other_storage', 'CSV')")
@@ -852,7 +798,7 @@ jarvis支持读取写入HDFS外部表
     bh.sql("SELECT * FROM hdfs_engine_table LIMIT 2").show()
 
 
-### 6.5 MYSQL对接
+### 5.5 MYSQL对接
     
     bh.sql("CREATE TABLE jarvis_mysql_talbe (foo UInt32, bar String,city String) ENGINE=MySQL('host:port', 'database', 'table', 'user', 'password'[, replace_query, 'on_duplicate_clause'])")
     ​参数含义为
@@ -869,7 +815,7 @@ jarvis支持读取写入HDFS外部表
     MySQL 引擎不支持 可为空 数据类型，因此，当从MySQL表中读取数据时，NULL 将转换为指定列类型的默认值（通常为0或空字符串）。
 
 
-### 6.6 MongoDB对接
+### 5.6 MongoDB对接
 MongoDB 外表引擎是只读表引擎，允许从远程 MongoDB 集合中读取数据(SELECT查询)。引擎只支持非嵌套的数据类型。不支持 INSERT 查询。
 
     bh.sql("CREATE TABLE [IF NOT EXISTS] [db.]table_name(name1 [type1],name2 [type2]) ENGINE = MongoDB(host:port, database, collection, user, password)")
@@ -881,7 +827,7 @@ MongoDB 外表引擎是只读表引擎，允许从远程 MongoDB 集合中读取
         参数4：user — MongoDB 用户.
         参数5：password — 用户密码.
 
-### 6.7 S3对接
+### 5.7 S3对接
     bh.sql("CREATE TABLE s3_engine_table (name String, value UInt32) ENGINE = S3(path, [aws_access_key_id, aws_secret_access_key,] format, [compression])")
     ​参数含义为
         参数1：path — 带有文件路径的 Bucket url。在只读模式下支持以下通配符: *, ?, {abc,def} 和 {N..M} 其中 N, M 是数字, 'abc', 'def' 是字符串. 更多信息见下文.
@@ -893,7 +839,7 @@ MongoDB 外表引擎是只读表引擎，允许从远程 MongoDB 集合中读取
     INSERT INTO s3_engine_table VALUES ('one', 1), ('two', 2), ('three', 3);
     SELECT * FROM s3_engine_table LIMIT 2;
 
-### 6.8 Kafka对接
+### 5.8 Kafka对接
     bh.sql("CREATE TABLE kafka_engine_table (name String, value UInt32) ENGINE = Kafka(kafka_broker_list, kafka_topic_list, kafka_group_name, kafka_format[, kafka_row_delimiter, kafka_schema, kafka_num_consumers])")
 
     必要参数：
@@ -907,7 +853,7 @@ MongoDB 外表引擎是只读表引擎，允许从远程 MongoDB 集合中读取
         kafka_schema – 如果解析格式需要一个 schema 时，此参数必填。例如，普罗托船长 需要 schema 文件路径以及根对象 schema.capnp:Message 的名字。
         kafka_num_consumers – 单个表的消费者数量。默认值是：1，如果一个消费者的吞吐量不足，则指定更多的消费者。消费者的总数不应该超过 topic 中分区的数量，因为每个分区只能分配一个消费者。
 
-### 6.9 PostgreSQL对接
+### 5.9 PostgreSQL对接
 PostgreSQL 引擎允许 jarvis 对存储在远程 PostgreSQL 服务器上的数据执行 SELECT 和 INSERT 查询.
 
     bh.sql("CREATE TABLE [IF NOT EXISTS] [db.]table_name [ON CLUSTER cluster](name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1] [TTL expr1]) ENGINE = PostgreSQL('host:port', 'database', 'table', 'user', 'password'[, `schema`])")
@@ -924,7 +870,7 @@ PostgreSQL 引擎允许 jarvis 对存储在远程 PostgreSQL 服务器上的数�
     bh.sql("CREATE TABLE default.postgresql_table(`float_nullable` Nullable(Float32),`str` String,`int_id` Int32) ENGINE = PostgreSQL('localhost:5432', 'public', 'test', 'postges_user', 'postgres_password')")
     bh.sql("SELECT * FROM postgresql_table WHERE str IN ('test')").show()
 
-### 6.10 EmbeddedRocksDB对接
+### 5.10 EmbeddedRocksDB对接
     
     bh.sql("CREATE TABLE [IF NOT EXISTS] [db.]table_name [ON CLUSTER cluster](name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1]) ENGINE = EmbeddedRocksDB PRIMARY KEY(primary_key_name)")
 
@@ -936,3 +882,61 @@ PostgreSQL 引擎允许 jarvis 对存储在远程 PostgreSQL 服务器上的数�
 
     例子
     bh.sql("CREATE TABLE test(`key` String,`v1` UInt32) ENGINE = EmbeddedRocksDBPRIMARY KEY key")
+
+### 5.11 Catalog管理外部数据
+#### 5.11.1 Catalog的定义
+Catalog功能，一般需要运维人员参与，普通用户可以忽略。如果运维人员已完成了catalog配置，用户可跳到第3、4小节查看使用方法。
+待分析的数据，可能分布在HIVE、HDFS、MySQL、BOS等不同的系统中（如上述章节所属）。Catalog功能，可帮用户集中管理外部数据源：管理用户可用的数据库和表的目录结构，给用户一个全局的数据视图，在引入外部数据和联邦查询中有重要作用。
+Catalog功能有三个功能：可以解耦数据提供方和使用方；可以简化数据使用流程；可以避免直接配置密码、避免安全问题。
+Catalog表示一个数据来源，可以包含来自不同系统的数据库和表，比如customer_catalog表示分析用户购买行为相关的数据源，其中包含来自MySQL的order_db和HIVE的customer_history_info_db等，通过联合分析MySQL order_db.order_list和HIVE customer_history_info_db.show_list来分析用户的喜好。所有分析师，只需要**配置Catalog源**的信息（比如http server的访问信息），就能看到这些数据库和表，就可以：**展示Catalog包含的Databases和Tables**，**从Catalog源导入某Database或Table** 到Jarvis里做分析。
+        
+#### 5.11.2 配置Catalog源
+	        本步骤一般由运维人员完成。Catalog源的配置文件，是Jarvis的运行目录下的.jarvis/catalog_conf.json文件。首次启动，会产生空文件。用户可以配置不同类型（http/bos/local/hdfs等）的Catalog源(注意：目前只重点支持了http类型）。
+	      .jarvis/catalog_conf.json内容：
+	      
+		[
+		    {
+		        "type": "http",
+		        "name": "http_catalog",
+		        "uri": "http://ip:8080/http_catalog/",
+		        "user": "user",
+		        "password": "*******"
+		    }
+		]
+
+说明：Catalog源提前放置到Nginx服务的指定目录下（如http_catalog)，具体内容按catalog name/database name/table & conn_info.json三层来组织，具体目录内容由数据提供方来维护，使用方不需要了解这些细节： table里面写表的table的schema,  \t 作为name 和类型的分隔符，不同列间用\n分隔，比如
+
+    #用户不需要关注如下细节：
+    #catalog/database/table1:  
+    col1 \t  Int32,
+    col2 \t String
+    
+    # catalog/database/conn_info.json写这些table的连接信息，格式如:
+    {
+        "type": "BOS", #或HIVE/Iceberg/MySQL/..
+        "host_port": "http://ip:port/",
+        "format": {
+              "taxi": "CSV",
+    	      "iris": "Parquet"
+        }
+    }
+
+#### 5.11.3 展示Catalog包含的Databases和Tables
+catalog在database上一级，SHOW命令：
+		
+		bh.sql("SHOW DATABASES FROM http_catalog") 
+		bh.sql("SHOW TABLES FROM http_catalog.db1") 
+		bh.sql("DESC http_catalog.db1.table1") 
+
+#### 5.11.4 从Catalog源导入Database或Table
+
+		bh.sql("CREATE DATABASE mydb1 FROM http_catalog.db1")
+		bh.sql("CREATE TABLE mytable1 FROM http_catalog.db1.table1')")
+
+导入后，可以按本地库或表一样访问外部数据： （但数据仍然在远端数据源，可结合cache把远端数据源缓存在本地、来加快查询速度）
+		
+		bh.sql("SHOW TABLES FROM mydb1")
+		bh.sql("SELECT * FROM mytable1")
+		bh.sql("DROP mydb1")
+
+****
