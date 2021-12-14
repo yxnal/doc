@@ -62,33 +62,6 @@ data_schema = '''user String,age Int32,fees Float32'''
 ds = bh.sql("create table if not exists {} ({}) Engine=MergeTree() order by tuple()".format(table_name, data_schema))
 ```
 
-建表有如下几种方式：
-* 方式1
-
-	CREATE TABLE [IF NOT EXISTS] [db.]table_name 
-	(
-		name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1],
-		name2 [type2] [DEFAULT|MATERIALIZED|ALIAS expr2],
-		...
-	) ENGINE = engine
-
-* 方式2
-
-	CREATE TABLE [IF NOT EXISTS] [db.]table_name AS [db2.]name2 [ENGINE = engine]
-
-* 方式3
-
-	CREATE TABLE [IF NOT EXISTS] [db.]table_name ENGINE = engine AS SELECT ...
-
-其中ENGINE一般指定为MergeTree()，并且还需要指定排序键，例如：
-
-	ENGINE=MergeTree() order by (name1 [,name2...])
-
-或
-
-	ENGINE=MergeTree() order by tuple()
-
-注：1.3.2版本之后建表不再需要指定ENGINE和排序键了，默认会按照MergeTree引擎建表。
 
 ### 1.3 查看表并导入数据
 
@@ -107,38 +80,8 @@ bh.sql("show tables").show()
 bh.sql("insert into table {} from infile '{}' format CSV".format(table_name, data_path))
 ```
 
-导入数据有如下几种方式：
-* 方式1
-
-	INSERT INTO [db.]table [(c1, c2, c3)] VALUES (v11, v12, v13), ...
-
-* 方式2
-
-	INSERT INTO [db.]table [(c1, c2, c3)] SELECT ...
-
-* 方式3
-
-	INSERT INTO [db.]table from infile 'path/filename' Format [CSV|Parquet]
 
 ### 1.4 开始查询
-
-表建好之后便可以对表中的数据进行各种查询了，查询语句的一般形式为：
-
-	SELECT [DISTINCT] expr_list
-	    [FROM [db.]table | (subquery) | table_function] [FINAL]
-	    [SAMPLE sample_coeff]
-	    [ARRAY JOIN ...]
-	    [GLOBAL] ANY|ALL INNER|LEFT JOIN (subquery)|table USING columns_list
-	    [PREWHERE expr]
-	    [WHERE expr]
-	    [GROUP BY expr_list] [WITH TOTALS]
-	    [HAVING expr]
-	    [ORDER BY expr_list]
-	    [LIMIT [n, ]m]
-	    [UNION ALL ...]
-	    [INTO OUTFILE filename]
-	    [FORMAT format]
-	    [LIMIT n BY columns]
 
 #### 1.4.1 全量查询表中的数据
 
@@ -411,51 +354,86 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
     5
 
 
-### 2.2 数据导入
-#### 2.2.1.从外部文件load数据到数据表
-SQL引擎支持将外部数据导入到本地数据表中，格式包括CSV、CSVWithNames和Parquet，目前只有Python接口，用法如下：
+### 2.2 建表
 
-    import blackhole as bh
-    
-    data_path = './test_data.csv'
-    table_name = 'test_table'
-    
-    bh.sql("insert into table test_table from infile './test_data.csv'  format CSV").show()
+建表有如下几种方式：
+#### 方式1
 
-上述代码会将本地的test_data.csv文件数据导入到test_table表中，其中schema为'id Int64, name String'。注意：指定的schema必须与数据源的schema相同。
-#### 2.2.2.使用INSERT方式插入数据
-1）单行插入
+	CREATE TABLE [IF NOT EXISTS] [db.]table_name 
+	(
+		name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1],
+		name2 [type2] [DEFAULT|MATERIALIZED|ALIAS expr2],
+		...
+	) ENGINE = engine
+	
 
-    import blackhole as bh
-    schema = 'id Int64, name String, price Float32'
-    table_name = 'test_insert_table'
-    bh.sql("create table if not exists {} ({}) Engine=MergeTree() order by tuple()".format(table_name, schema)).show()
-    insert_sql = '''INSERT INTO %s VALUES(%d,'%s',%f)''' % (table_name, 0, 'apple', 12.37)
-    bh.sql(insert_sql).show()
+#### 方式2
 
+	CREATE TABLE [IF NOT EXISTS] [db.]table_name AS [db2.]name2 [ENGINE = engine]
+	
 
-2）多行插入
+#### 方式3
 
-    insert_sql = 'INSERT INTO %s VALUES ' % table_name
-    insert_sql += "(0,'apple',12.37),(1,'orange','11.23'),(2,'strawberry',11.34)"
-    
-    bh.sql(insert_sql).show()
+	CREATE TABLE [IF NOT EXISTS] [db.]table_name ENGINE = engine AS SELECT ...
 
 
-注意：String类型字段值的引号不能省略。
+其中ENGINE一般指定为MergeTree()，并且还需要指定排序键，例如：
 
-### 2.3 数据查询
-#### 2.3.3 从数据表查询
+	ENGINE=MergeTree() order by (name1 [,name2...])
+
+或
+
+	ENGINE=MergeTree() order by tuple()
+
+注：1.3.2版本之后建表不再需要指定ENGINE和排序键了，默认会按照MergeTree引擎建表。
+
+### 2.3 数据导入
+
+导入数据有如下几种方式：
+#### 方式1
+
+	INSERT INTO [db.]table [(c1, c2, c3)] VALUES (v11, v12, v13), ...
+
+#### 方式2
+
+	INSERT INTO [db.]table [(c1, c2, c3)] SELECT ...
+
+#### 方式3
+
+	INSERT INTO [db.]table from infile 'path/filename' Format [CSV|Parquet]
+
+
+
+### 2.4 数据查询
+表建好并导入数据之后便可以对表中的数据进行各种查询了，查询语句的一般形式为：
+
+	SELECT [DISTINCT] expr_list
+	    [FROM [db.]table | (subquery) | table_function] [FINAL]
+	    [SAMPLE sample_coeff]
+	    [ARRAY JOIN ...]
+	    [GLOBAL] ANY|ALL INNER|LEFT JOIN (subquery)|table USING columns_list
+	    [PREWHERE expr]
+	    [WHERE expr]
+	    [GROUP BY expr_list] [WITH TOTALS]
+	    [HAVING expr]
+	    [ORDER BY expr_list]
+	    [LIMIT [n, ]m]
+	    [UNION ALL ...]
+	    [INTO OUTFILE filename]
+	    [FORMAT format]
+	    [LIMIT n BY columns]
+
+#### 2.4.3 从数据表查询
 
     import blackhole as bh
     query_sql = 'select * from test_table'
     bh.sql(query_sql).show()
 
-#### 2.3.3 从外部文件查询
+#### 2.4.3 从外部文件查询
 
     bh.sql("select * from file('./test.csv','CSV','id Int64, name String, price Float32')").show()
 
-#### 2.3.4 查询子句
+#### 2.4.4 查询子句
 **DISTINCT**
 	查询结果集在指定字段上只保留一行
 
@@ -532,9 +510,9 @@ SQL引擎支持将外部数据导入到本地数据表中，格式包括CSV、CS
 **FROM INFILE**
 将外部文件数据导入到本地表中
 
-### 2.4 数据导出
+### 2.5 数据导出
 
-#### 2.4.1 直接展示
+#### 2.5.1 直接展示
 示例：
 
     import blackhole as bh
@@ -543,7 +521,7 @@ SQL引擎支持将外部数据导入到本地数据表中，格式包括CSV、CS
 
 默认打印前100行
 
-#### 2.4.2 导出到文件
+#### 2.5.2 导出到文件
 示例：
 
     query_sql = "select * from test_table into outfile './temp.csv'  Format CSV"
