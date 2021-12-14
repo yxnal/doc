@@ -366,15 +366,31 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 		...
 	) ENGINE = engine
 	
+示例:
+
+	import blackhole as bh
+	bh.sql("create table if not exists test (user String,age Int32,fees Float32) Engine=MergeTree() order by tuple()")
+	
 
 #### 方式2
 
 	CREATE TABLE [IF NOT EXISTS] [db.]table_name AS [db2.]name2 [ENGINE = engine]
 	
+示例:
+
+	import blackhole as bh
+	bh.sql("create database db2")
+	bh.sql("create table if not exists db2.test as default.test Engine=MergeTree() order by tuple() ")
+	
 
 #### 方式3
 
 	CREATE TABLE [IF NOT EXISTS] [db.]table_name ENGINE = engine AS SELECT ...
+
+示例:
+
+	import blackhole as bh
+	bh.sql("create table if not exists test2 ENGINE=MergeTree() order by tuple() as select * from test")
 
 
 其中ENGINE一般指定为MergeTree()，并且还需要指定排序键，例如：
@@ -393,15 +409,28 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 #### 方式1
 
 	INSERT INTO [db.]table [(c1, c2, c3)] VALUES (v11, v12, v13), ...
+示例:
+
+	import blackhole as bh
+	bh.sql("insert into table test values ('Jack', 32, 23567)")
 
 #### 方式2
 
 	INSERT INTO [db.]table [(c1, c2, c3)] SELECT ...
 
+示例:
+
+	import blackhole as bh
+	bh.sql("insert into table test2 select * from test")
+
 #### 方式3
 
 	INSERT INTO [db.]table from infile 'path/filename' Format [CSV|Parquet]
-
+	
+示例:
+	
+	import blackhole as bh
+	bh.sql("insert into table test from infile './test.csv' format CSV")
 
 
 ### 2.4 数据查询
@@ -423,15 +452,17 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 	    [FORMAT format]
 	    [LIMIT n BY columns]
 
-#### 2.4.3 从数据表查询
+示例:
+
+#### 从数据表查询
 
     import blackhole as bh
-    query_sql = 'select * from test_table'
-    bh.sql(query_sql).show()
+    bh.sql("select * from test").show()
 
-#### 2.4.3 从外部文件查询
+#### 从外部文件查询
 
-    bh.sql("select * from file('./test.csv','CSV','id Int64, name String, price Float32')").show()
+	import blackhole as bh
+	bh.sql("select * from file('./test.csv','CSV','name String, age Int32, fees Float32')").show()
 
 #### 2.4.4 查询子句
 **DISTINCT**
