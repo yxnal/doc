@@ -48,7 +48,7 @@ file.close()
 
 ```python
 table_name='test'
-bh.sql('drop table if exists {tablename}')
+bh.sql('drop table if exists {table_name}')
 ```
 
 
