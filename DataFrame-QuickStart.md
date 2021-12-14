@@ -1613,7 +1613,7 @@ uk_jpn_rain['rain_octsep_x'].plot(kind='bar', colormap='Paired')
 
 
     
-![png](output_70_1.png)
+![avatar](output_70_1.png)
     
 
 
