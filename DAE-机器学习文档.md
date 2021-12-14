@@ -1,45 +1,5 @@
-## Blackhole ml API
-Blackhole ml是高性能机器学习引擎，支持类sklearn接口的常见机器学习算子。
-
-
-### save_model
-blackhole ml保存模型方法。
-* 参数:
-    * model: 待保存模型
-    * file_path: str，
-        模型的保存路径
-
-
-### load_model
-blackhole ml加载模型方法。
-* 参数:
-    * file_path: str，
-        模型保存的路径
-
-
-### load_file
-blackhole ml加载数据文件方法，支持CSV、Parquet、ORC等多种数据格式的加载。
-* 参数:
-    * file_path : str，
-        指定要导入的数据文件或文件夹的路径
-    * header : 默认0，
-        -1表示第一行是数据，0表示猜测，1表示第一行是标题
-    * sep : 默认None，
-        字段分隔符，若None，解析器将自动推测分隔符
-    * col_names : list，
-        列名
-    * col_types : list，
-        列数据类别
-    * na_strings : list，
-        缺失值表示
-    * pattern : str，
-        当file_path为文件夹时，设定匹配文件夹中文件名的正则表达式
-    * skipped_columns : list，
-        跳过的列名
-    * custom_non_data_line_markers : str，
-        如果导入文件中的某行以给定的字符串中的任何字符为开头，则不会导入该行,\
-        空字符串表示导入所有行
-
+## DAE Machine Learning
+DAE Machine Learning是高性能机器学习引擎库，支持类sklearn接口的常见机器学习算子。
 
 ### RandomForestClassifier
 随机森林分类算法
@@ -138,9 +98,40 @@ blackhole ml加载数据文件方法，支持CSV、Parquet、ORC等多种数据�
     
 * 方法:
     * fit，包含两个参数： 特征数据：X，标签数据：y
-    * predict，包含一个参数： 待预测数据：test_data
-    * predict_proba，包含一个参数：待预测数据：test_data
+    * predict，包含一个参数： 待预测数据：X_test
+    * predict_proba，包含一个参数：待预测数据：X_test
 
+* example
+```python
+# 下载数据集
+import urllib
+
+train_url = (
+    'https://blackhole.bj.bcebos.com/ml.19.12/test_classifier-0.csv'
+    '?authorization=bce-auth-v1/d89e031134994988befe28ac9f705905/20'
+    '20-01-15T06:22:12Z/-1/host/68212271bab3b4c7e54718d01d93a190ab7'
+    'ab412ec5eddb878378991c8058f7d'
+)
+urllib.request.urlretrieve(train_url, 'train.csv')
+
+# 加载数据集
+import blackhole.dataframe as bhdf
+data = bhdf.read_csv('./train.csv')
+
+# 划分训练集和测试集
+from blackhole.model_selection import train_test_split
+X, y = data[:, 0:-1], data[:, -1]
+X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+# 模型训练
+from blackhole.ml.ensemble import RandomForestClassifier
+model = RandomForestClassifier(n_estimators=50, max_depth=20)
+model.fit(X_train, y_train)
+
+# 模型预测
+y_pred = model.predict(X_test)
+y_pred_proba = model.predict_proba(X_test)
+```
 
 ### RandomForestRegressor
 随机森例回归算法
@@ -239,8 +230,18 @@ blackhole ml加载数据文件方法，支持CSV、Parquet、ORC等多种数据�
     
 * 方法:
     * fit，包含两个参数： 特征数据：X，标签数据：y
-    * predict，包含一个参数： 待预测数据：test_data
+    * predict，包含一个参数： 待预测数据：X_test
 
+* example
+```python
+# 模型训练
+from blackhole.ml.ensemble import RandomForestRegressor
+model = RandomForestRegressor(n_estimators=50, max_depth=20)
+model.fit(X_train, y_train)
+
+# 模型预测
+y_pred = model.predict(X_test)
+```
 
 ### GradientBoostingClassifier
 梯度提升数分类算法
@@ -340,8 +341,18 @@ blackhole ml加载数据文件方法，支持CSV、Parquet、ORC等多种数据�
         
 * 方法:
     * fit，包含两个参数： 特征数据：X，标签数据：y
-    * predict，包含一个参数： 待预测数据：test_data
+    * predict，包含一个参数： 待预测数据：X_test
 
+* example
+```python
+# 模型训练
+from blackhole.ml.ensemble import GradientBoostingClassifier
+model = GradientBoostingClassifier(n_estimators=50, max_depth=5)
+model.fit(X_train, y_train)
+
+# 模型预测
+y_pred = model.predict(X_test)
+```
 
 ### GradientBoostingRegressor
 梯度提升树回算法
@@ -441,8 +452,18 @@ blackhole ml加载数据文件方法，支持CSV、Parquet、ORC等多种数据�
         
 * 方法:
     * fit，包含两个参数： 特征数据：X，标签数据：y
-    * predict，包含一个参数： 待预测数据：test_data
+    * predict，包含一个参数： 待预测数据：X_test
 
+* example
+```python
+# 模型训练
+from blackhole.ml.ensemble import GradientBoostingRegressor
+model = GradientBoostingRegressor(n_estimators=50, max_depth=5)
+model.fit(X_train, y_train)
+
+# 模型预测
+y_pred = model.predict(X_test)
+```
 
 ### XGBClassifier
 xgboost分类算法.
@@ -538,9 +559,20 @@ xgboost分类算法.
     
 * 方法:
     * fit，包含两个参数： 特征数据：X，标签数据：y
-    * predict，包含一个参数： 待预测数据：test_data
-    * predict_proba，包含一个参数：待预测数据：test_data
+    * predict，包含一个参数： 待预测数据：X_test
+    * predict_proba，包含一个参数：待预测数据：X_test
 
+* example
+```python
+# 模型训练
+from blackhole.ml.ensemble import XGBClassifier
+model = XGBClassifier(n_estimators=50, max_depth=6)
+model.fit(X_train, y_train)
+
+# 模型预测
+y_pred = model.predict(X_test)
+y_pred_proba = model.predict_proba(X_test)
+```
 
 ### XGBRegressor
 xgboost 回归算法
@@ -636,8 +668,18 @@ xgboost 回归算法
 
 * 方法:
     * fit，包含两个参数： 特征数据：X，标签数据：y
-    * predict，包含一个参数： 待预测数据：test_data
+    * predict，包含一个参数： 待预测数据：X_test
 
+* example
+```python
+# 模型训练
+from blackhole.ml.ensemble import XGBRgressor
+model = XGBRgressor(n_estimators=50, max_depth=6)
+model.fit(X_train, y_train)
+
+# 模型预测
+y_pred = model.predict(X_test)
+```
 
 ### ExtraTreesClassifier
 极度随机树分类算法
@@ -748,8 +790,18 @@ adaboost树回归算法
         模型训练允许的最大运行时间（以秒为单位），0表示禁用
 * 方法: 
     * fit，包含两个参数： 特征数据：X，标签数据：y
-    * predict，包含一个参数： 待预测数据：test_data
+    * predict，包含一个参数： 待预测数据：X_test
 
+* example
+```python
+# 模型训练
+from blackhole.ml.linear_model import LogisticRegression
+model = LogisticRegression(penalty='l2')
+model.fit(X_train, y_train)
+
+# 模型预测
+y_pred = model.predict(X_test)
+```
 
 ### LinearRegression
 线性回归算法
@@ -809,7 +861,18 @@ Lasso回归算法
     * export_checkpoints_dir=None
 * 方法: 
     * fit，包含两个参数： 特征数据：X，标签数据：y
-    * predict，包含一个参数： 待预测数据：test_data
+    * predict，包含一个参数： 待预测数据：X_test
+
+* example
+```python
+# 模型训练
+from blackhole.ml.naive_bayes import GaussianNB
+model = GaussianNB()
+model.fit(X_train, y_train)
+
+# 模型预测
+y_pred = model.predict(X_test)
+```
 
 
 ### KNeighborsClassifier
@@ -870,8 +933,18 @@ Lasso回归算法
     * mu_factor=10.0
 * 方法: 
     * fit，包含两个参数： 特征数据：X，标签数据：y
-    * predict，包含一个参数： 待预测数据：test_data
+    * predict，包含一个参数： 待预测数据：X_test
 
+* example
+```python
+# 模型训练
+from blackhole.ml.svm import SVC
+model = SVC()
+model.fit(X_train, y_train)
+
+# 模型预测
+y_pred = model.predict(X_test)
+```
 
 ### PCA
 主成分分析 (PCA).
@@ -901,9 +974,18 @@ Lasso回归算法
     
 * 方法:
     * fit，包含一个参数： 训练数据：X
-    * predict，包含一个参数： 待预测数据：test_data
+    * predict，包含一个参数： 待预测数据：X_test
 
+* example
+```python
+# 模型训练
+from blackhole.ml.decomposition import PCA
+model = PCA()
+model.fit(X_train)
 
+# 模型预测
+y_pred = model.predict(X_test)
+```
 
 ### IsolationForest
 孤立森林算法
@@ -940,8 +1022,18 @@ Lasso回归算法
     * export_checkpoints_dir=None,
 * 方法:
     * fit，包含一个参数： 训练数据：X
-    * predict，包含一个参数： 待预测数据：test_data
-   
+    * predict，包含一个参数： 待预测数据：X_test
+
+* example
+```python
+# 模型训练
+from blackhole.ml.ensemble import IsolationForest
+model = IsolationForest()
+model.fit(X_train)
+
+# 模型预测
+y_pred = model.predict(X_test)
+```
 
 ### KMeans
 K-Means聚类算法
@@ -987,4 +1079,72 @@ K-Means聚类算法
     
 * 方法:
     * fit，包含一个参数： 训练数据：X
-    * predict，包含一个参数： 待预测数据：test_data
+    * predict，包含一个参数： 待预测数据：X_test
+
+* example
+```python
+# 模型训练
+from blackhole.ml.cluster import KMeans
+model = KMeans()
+model.fit(X_train)
+
+# 模型预测
+y_pred = model.predict(X_test)
+```
+
+### save_model
+DAE ml保存模型方法。
+* 参数:
+    * model: 待保存模型
+    * file_path: str，
+        模型的保存路径
+
+* example
+```python
+from blackhole.ml import save_model
+save_model(model, './model')
+```
+
+
+### load_model
+DAE ml加载模型方法。
+* 参数:
+    * file_path: str，
+        模型保存的路径
+
+* example
+```python
+from blackhole.ml import load_model
+model = load_model('./model')
+```
+
+
+### load_file
+DAE ML加载数据文件的方法，支持CSV、Parquet、ORC等多种数据格式的加载。
+* 参数:
+    * file_path : str，
+      指定要导入的数据文件或文件夹的路径
+    * header : 默认0，
+      -1表示指定第一行为实际数据，1表示指定第一行为数据列名，0表示自动推测第一行代表实际数据或数据列名
+    * sep : 默认None，
+      字段分隔符，若None，解析器将自动推测分隔符
+    * col_names : list，
+      数据列名
+    * col_types : list，
+      列类别
+    * na_strings : list，
+      缺失值表示
+    * pattern : str，
+      当file_path为文件夹时，设定匹配文件夹中文件名的正则表达式
+    * skipped_columns : list，
+      跳过的列名
+    * custom_non_data_line_markers : str，
+      如果导入文件中的某行，以给定的字符串中的任何字符为开头时，则不会导入该行,\
+      空字符串表示导入所有行
+
+* example
+```python
+from blackhole.ml.datasets import load_file
+
+data = load_file('./train.csv') 
+```
