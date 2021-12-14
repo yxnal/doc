@@ -103,6 +103,17 @@ DAE Machine Learning是高性能机器学习引擎库，支持类sklearn接口�
 
 * example
 ```python
+# 下载数据集
+import urllib
+
+train_url = (
+    'https://blackhole.bj.bcebos.com/ml.19.12/test_classifier-0.csv'
+    '?authorization=bce-auth-v1/d89e031134994988befe28ac9f705905/20'
+    '20-01-15T06:22:12Z/-1/host/68212271bab3b4c7e54718d01d93a190ab7'
+    'ab412ec5eddb878378991c8058f7d'
+)
+urllib.request.urlretrieve(train_url, 'train.csv')
+
 # 加载数据集
 import blackhole.dataframe as bhdf
 data = bhdf.read_csv('./train.csv')
