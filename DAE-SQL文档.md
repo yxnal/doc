@@ -14,7 +14,6 @@ Blackhole SQL是一款面向大数据的、旨在提供对结构化数据使用S
 **CodeLab平台默认不安装Blackhole，请先到导航左边“包管理”页面安装blackhole。**  
 **这个文档简单介绍了Blackhole数据分析的常用接口，更多关于blackhole使用方法和案例，请参考[Blackhole简介和基本用法](https://cloud.baidu.com/doc/BML/s/9khemrnv7)。**
 
-# SQL引擎使用方式
 
 下面将介绍SQL引擎基本功能的使用方式，目前SQL引擎支持python api,用户可以通过编写python程序实现和引擎的交互。
 
@@ -60,11 +59,6 @@ bh.sql(sql)
 
 
 
-
-    <blackhole.sql.dataset.dataset.Dataset at 0x7f1de42207d0>
-
-
-
 下面我们将使用上面代码生成的数据文件来建表并导入数据,表名称为'test',代码如下:  
 
 
@@ -72,6 +66,32 @@ bh.sql(sql)
 data_schema = '''user String,age Int32,fees Float32'''
 ds = bh.sql("create table if not exists {} ({}) Engine=MergeTree() order by tuple()".format(table_name, data_schema))
 ```
+
+建表有如下几种方式：
+#### 方式1
+	CREATE TABLE [IF NOT EXISTS] [db.]table_name 
+	(
+    	name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1],
+    	name2 [type2] [DEFAULT|MATERIALIZED|ALIAS expr2],
+    	...
+	) ENGINE = engine
+
+#### 方式2
+	CREATE TABLE [IF NOT EXISTS] [db.]table_name AS [db2.]name2 [ENGINE = engine]
+
+#### 方式3
+	CREATE TABLE [IF NOT EXISTS] [db.]table_name ENGINE = engine AS SELECT ...
+
+其中ENGINE一般指定为MergeTree()，并且还需要指定排序键，例如：
+
+	ENGINE=MergeTree() order by (name1 [,name2...])
+
+或
+
+	ENGINE=MergeTree() order by tuple()
+
+#### 注
+1.3.2版本之后建表不再需要指定ENGINE和排序键了，默认会按照MergeTree引擎建表。
 
 ## 3.查看表并导入数据
 
@@ -90,15 +110,37 @@ bh.sql("show tables").show()
 bh.sql("insert into table {} from infile '{}' format CSV".format(table_name, data_path))
 ```
 
+导入数据有如下几种方式：
+#### 方式1
+	INSERT INTO [db.]table [(c1, c2, c3)] VALUES (v11, v12, v13), ...
 
-
-
-    <blackhole.sql.dataset.dataset.Dataset at 0x7f1de41a6950>
-
+#### 方式2
+	INSERT INTO [db.]table [(c1, c2, c3)] SELECT ...
+	
+#### 方式3
+	INSERT INTO [db.]table from infile 'path/filename' Format [CSV|Parquet]
 
 
 ## 4.开始查询
-表建好之后便可以对表中的数据进行各种查询了
+表建好之后便可以对表中的数据进行各种查询了，查询语句的一般形式为：
+
+	SELECT [DISTINCT] expr_list
+	    [FROM [db.]table | (subquery) | table_function] [FINAL]
+	    [SAMPLE sample_coeff]
+	    [ARRAY JOIN ...]
+	    [GLOBAL] ANY|ALL INNER|LEFT JOIN (subquery)|table USING columns_list
+	    [PREWHERE expr]
+	    [WHERE expr]
+	    [GROUP BY expr_list] [WITH TOTALS]
+	    [HAVING expr]
+	    [ORDER BY expr_list]
+	    [LIMIT [n, ]m]
+	    [UNION ALL ...]
+	    [INTO OUTFILE filename]
+	    [FORMAT format]
+	    [LIMIT n BY columns]
+
+
   ### 4-1.全量查询表中的数据
 
 
