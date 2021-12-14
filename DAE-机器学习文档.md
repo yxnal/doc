@@ -1,4 +1,9 @@
-## DAE Machine Learning
+[TOC]
+
+
+
+## DAE Machine Learning 算子介绍&示例
+
 DAE Machine Learning是高性能机器学习引擎库，支持类sklearn接口的常见机器学习算子。
 
 ### RandomForestClassifier
@@ -338,7 +343,7 @@ y_pred = model.predict(X_test)
     * check_constant_response : bool，默认False，
         检查响应列是否为常量值，启用下，若响应列为常量值，则引发异常，
         如果禁用，无论响应列是否为恒定值，模型都将训练
-        
+    
 * 方法:
     * fit，包含两个参数： 特征数据：X，标签数据：y
     * predict，包含一个参数： 待预测数据：X_test
@@ -449,7 +454,7 @@ y_pred = model.predict(X_test)
     * check_constant_response : bool，默认False，
         检查响应列是否为常量值，启用下，若响应列为常量值，则引发异常，
         如果禁用，无论响应列是否为恒定值，模型都将训练
-        
+    
 * 方法:
     * fit，包含两个参数： 特征数据：X，标签数据：y
     * predict，包含一个参数： 待预测数据：X_test
