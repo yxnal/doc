@@ -464,7 +464,7 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 	import blackhole as bh
 	bh.sql("select * from file('./test.csv','CSV','name String, age Int32, fees Float32')").show()
 
-#### 2.4.4 查询子句
+#### 查询子句
 **DISTINCT**
 	查询结果集在指定字段上只保留一行
 
