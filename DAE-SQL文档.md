@@ -813,6 +813,9 @@ jarvis支持读取写入HDFS外部表
     其余条件以及 LIMIT 采样约束语句仅在对MySQL的查询完成后才在Jarvis中执行。
     MySQL 引擎不支持 可为空 数据类型，因此，当从MySQL表中读取数据时，NULL 将转换为指定列类型的默认值（通常为0或空字符串）。
 
+    与此同时，jarvis也支持MYSQL库引擎，如下所示
+    bh.sql("CREATE DATABASE [IF NOT EXISTS] db_name [ON CLUSTER cluster] ENGINE = MySQL('host:port', ['database' | database], 'user', 'password')")
+
 
 ### 5.6 MongoDB对接
 MongoDB 外表引擎是只读表引擎，允许从远程 MongoDB 集合中读取数据(SELECT查询)。引擎只支持非嵌套的数据类型。不支持 INSERT 查询。
@@ -868,6 +871,10 @@ PostgreSQL 引擎允许 jarvis 对存储在远程 PostgreSQL 服务器上的数�
     创建、select 例子
     bh.sql("CREATE TABLE default.postgresql_table(`float_nullable` Nullable(Float32),`str` String,`int_id` Int32) ENGINE = PostgreSQL('localhost:5432', 'public', 'test', 'postges_user', 'postgres_password')")
     bh.sql("SELECT * FROM postgresql_table WHERE str IN ('test')").show()
+
+    与此同时，jarvis也支持PostgreSQL库引擎，如下所示
+    bh.sql("CREATE DATABASE test_database ENGINE = PostgreSQL('host:port', 'database', 'user', 'password'[, `use_table_cache`]);")
+        use_table_cache — 定义数据库表结构是否已缓存或不进行。可选的。默认值： 0.
 
 ### 5.10 EmbeddedRocksDB对接
     
