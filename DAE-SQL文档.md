@@ -897,33 +897,50 @@ Catalog功能有三个功能：可以解耦数据提供方和使用方；可以�
 Catalog表示一个数据来源，可以包含来自不同系统的数据库和表，比如customer_catalog表示分析用户购买行为相关的数据源，其中包含来自MySQL的order_db和HIVE的customer_history_info_db等，通过联合分析MySQL order_db.order_list和HIVE customer_history_info_db.show_list来分析用户的喜好。所有分析师，只需要**配置Catalog源**的信息（比如http server的访问信息），就能看到这些数据库和表，就可以：**展示Catalog包含的Databases和Tables**，**从Catalog源导入某Database或Table** 到Jarvis里做分析。
         
 #### 5.11.2 配置Catalog源
-	        本步骤一般由运维人员完成。Catalog源的配置文件，是Jarvis的运行目录下的.jarvis/catalog_conf.json文件。首次启动，会产生空文件。用户可以配置不同类型（http/bos/local/hdfs等）的Catalog源(注意：目前只重点支持了http类型）。
-	      .jarvis/catalog_conf.json内容：
-	      
-		[
-		    {
-		        "type": "http",
-		        "name": "http_catalog",
-		        "uri": "http://ip:8080/http_catalog/",
-		        "user": "user",
-		        "password": "*******"
-		    }
-		]
+本步骤一般由运维人员完成。
+Catalog源的配置文件，是dae的运行目录下的.jarvis/catalog_conf.json文件。首次启动，会产生空文件。用户可以编辑它，配置自己的Catalog源(注意：目前只重点支持了http类型）。
 
-说明：Catalog源提前放置到Nginx服务的指定目录下（如http_catalog)，具体内容按catalog name/database name/table & conn_info.json三层来组织，具体目录内容由数据提供方来维护，使用方不需要了解这些细节： table里面写表的table的schema,  \t 作为name 和类型的分隔符，不同列间用\n分隔，比如
+.jarvis/catalog_conf.json内容：
+     
+    [
+        {
+            "type": "http",
+            "name": "http_catalog",
+            "uri": "http://ip:8080/http_catalog/",
+            "user": "user",
+            "password": "nginx_password_base64"
+        }
+    ]
 
-    #用户不需要关注如下细节：
-    #catalog/database/table1:  
-    col1 \t  Int32,
+说明：
+1， uri填：nginx服务的ip/port和catalog所在的nginx路径
+2， user和password填： nginx的账号和 密码的base64。
+3， Catalog源提前放置到Nginx服务的指定目录下（如/http_catalog)，文件组织成如下结构： (tree http_catalog的结果）
+
+    http_catalog
+    ├── mysql_db
+    │   ├── conn_info.json
+    │   ├── table1
+    └── postgresql_db
+        ├── conn_info.json
+        ├── table2
+        └── table3
+
+其中http_catalog/mysql_db/table1 内容如下:   （列名和类型\t分隔）
+
+    col1 \t Int32,
     col2 \t String
-    
-    # catalog/database/conn_info.json写这些table的连接信息，格式如:
+
+   
+其中http_catalog/mysql_db/conn_info.json  内容如下: （password需要base64编码）
+
     {
-        "type": "BOS", #或HIVE/Iceberg/MySQL/..
-        "host_port": "http://ip:port/",
+        "type": "MySQL",  #database类型，可以为BOS/HIVE/Iceberg/MySQL/..
+        "host_port": "http://ip:port/",  #MySQL的服务ip,post
+        "user": "mysql_user",  
+        "password": "mysql_password_base64_encode",
         "format": {
-              "taxi": "CSV",
-    	      "iris": "Parquet"
+              "table1": "CSV"  #CSV/Parquet等格式
         }
     }
 
