@@ -936,7 +936,7 @@ Catalog源的配置文件，是dae的运行目录下的.jarvis/catalog_conf.json
 
     {
         "type": "MySQL",  #database类型，可以为BOS/HIVE/Iceberg/MySQL/..
-        "host_port": "http://ip:port/",  #MySQL的服务ip,post
+        "host_port": "host:port",  #MySQL的服务host,post
         "user": "mysql_user",  
         "password": "mysql_password_base64_encode",
         "format": {
