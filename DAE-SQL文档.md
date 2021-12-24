@@ -10,16 +10,58 @@ Blackhole SQL是一款面向大数据的、旨在提供对结构化数据使用S
 
 下面将介绍SQL引擎基本功能的使用方式，目前SQL引擎支持python api,用户可以通过编写python程序实现和引擎的交互。
 
-### 1.1 导入SQL依赖
+### 1.1  三分钟入门
 
-  本教程将使用以下方式导入SQL依赖:
+构建csv文件，建表查询
+```python
+#构建csv文件
+import os
+with open('./test.csv', 'w+') as f:
+    f.write('''name,age,fee
+               Tom,32,3205.0
+               Jack,31,14523.0
+               Herry,28,9845.0''') 
+               
+#建表并查询
+from dae import sql
+sql("create table table1 from 'test.csv' format CSV")
+sql("select * from table1 where age > 30").show()
+```
+
+    name      age    salary
+    ------  -----  --------
+    Tom        32     13205
+    Jack       31     14523
+
+其他功能简介
+```python
+#查外部数据（HIVE/HDFS/MySQL/MongoDB/PostgreSQL/BOS/Iceberg等）
+bh.sql("CREATE TABLE hdfs_table (name String, value UInt32) ENGINE=HDFS('hdfs://hdfs1:9000/other_storage', 'Parquet')")
+
+#查询结果可cache到本地，供后续复用
+search_res = sql("select * from table1 where age > 30")
+search_res.cache()  #cache计算结果
+sql("select * from {search_res}").show()
+
+#多个交互sql组成 复杂sql，整体执行优化
+t1 = sql('SELECT * FROM system.tables')
+t2 = sql('SELECT * FROM system.columns')
+t3 = sql("SELECT * FROM {t1} as t1 JOIN {t2} as t2 ON(t1.name=t2.table) limit 1").show()
+
+#sql与dataframe混合使用
+df = sql("select * from table1 where age > 10").to_df()  #sql table转成dataframe
+df = df[df.age > 30]  #dataframe计算
+sql("select * from {df}").show()  #sql中直接使用dataframe对象
+```
+
+### 1.2 导入SQL依赖，建表并导入数据
+
+本教程将使用以下方式导入SQL依赖:
 
 
 ```python
 import blackhole as bh
 ```
-
-### 1.2 建表并导入数据
 
 我们先生成如下一份数据文件"test.csv", 数据每行包含3个字段:  
 
