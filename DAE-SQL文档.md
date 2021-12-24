@@ -6,7 +6,7 @@
 
 ## 1. 快速入门案例
 
-Blackhole SQL是一款面向大数据的、旨在提供对结构化数据使用SQL语句进行查询、分析、统计等功能的单机计算引擎，提供了数据导入、导出能力，和Blackhole的其他两大模块DataFrame和ML能够无缝对接。  
+DAE SQL是一款面向大数据的、旨在提供对结构化数据使用SQL语句进行查询、分析、统计等功能的单机计算引擎，提供了数据导入、导出能力，和DAE的其他两大模块DataFrame和ML能够无缝对接。  
 
 下面将介绍SQL引擎基本功能的使用方式，目前SQL引擎支持python api,用户可以通过编写python程序实现和引擎的交互。
 
@@ -36,7 +36,7 @@ sql("select * from table1 where age > 30").show()
 其他功能简介
 ```python
 #查外部数据（HIVE/HDFS/MySQL/MongoDB/PostgreSQL/BOS/Iceberg等）
-bh.sql("CREATE TABLE hdfs_table (name String, value UInt32) ENGINE=HDFS('hdfs://hdfs1:9000/other_storage', 'Parquet')")
+sql("CREATE TABLE hdfs_table (name String, value UInt32) ENGINE=HDFS('hdfs://hdfs1:9000/other_storage', 'Parquet')")
 
 #查询结果可cache到本地，供后续复用
 search_res = sql("select * from table1 where age > 30")
@@ -60,7 +60,7 @@ sql("select * from {df}").show()  #sql中直接使用dataframe对象
 
 
 ```python
-import blackhole as bh
+from dae import sql
 ```
 
 我们先生成如下一份数据文件"test.csv", 数据每行包含3个字段:  
@@ -90,7 +90,7 @@ file.close()
 
 ```python
 table_name='test'
-bh.sql('drop table if exists {table_name}')
+sql('drop table if exists {table_name}')
 ```
 
 
@@ -100,7 +100,7 @@ bh.sql('drop table if exists {table_name}')
 
 ```python
 data_schema = '''user String,age Int32,fees Float32'''
-ds = bh.sql("create table if not exists {table_name} ({data_schema}) Engine=MergeTree() order by tuple()")
+ds = sql("create table if not exists {table_name} ({data_schema}) Engine=MergeTree() order by tuple()")
 ```
 
 
@@ -108,7 +108,7 @@ ds = bh.sql("create table if not exists {table_name} ({data_schema}) Engine=Merg
 
 
 ```python
-bh.sql("show tables").show()
+sql("show tables").show()
 ```
 
     name
@@ -118,7 +118,7 @@ bh.sql("show tables").show()
 
 
 ```python
-bh.sql("insert into table {table_name} from infile '{path}' format CSV", path=data_path)
+sql("insert into table {table_name} from infile '{path}' format CSV", path=data_path)
 ```
 
 
@@ -128,7 +128,7 @@ bh.sql("insert into table {table_name} from infile '{path}' format CSV", path=da
 
 
 ```python
-bh.sql('select * from test').show()
+sql('select * from test').show()
 ```
 
     user      age    fees
@@ -143,7 +143,7 @@ bh.sql('select * from test').show()
 
 
 ```python
-bh.sql('select * from test where fees < 10000.0 limit 2').show()
+sql('select * from test where fees < 10000.0 limit 2').show()
 ```
 
     user      age    fees
@@ -155,10 +155,10 @@ bh.sql('select * from test where fees < 10000.0 limit 2').show()
 
 
 ```python
-bh.sql('select sum(fees) from test').show()
-bh.sql('select avg(age) from test').show()
-bh.sql('select min(age) from test').show()
-bh.sql('select max(fees) from test').show()
+sql('select sum(fees) from test').show()
+sql('select avg(age) from test').show()
+sql('select min(age) from test').show()
+sql('select max(fees) from test').show()
 ```
 
       sum(fees)
@@ -178,7 +178,7 @@ bh.sql('select max(fees) from test').show()
 
 
 ```python
-bh.sql('select * from test order by age desc').show()
+sql('select * from test order by age desc').show()
 ```
 
     user      age    fees
@@ -193,7 +193,7 @@ bh.sql('select * from test order by age desc').show()
 
 
 ```python
-bh.sql('select user, max(fees) from test group by user').show()
+sql('select user, max(fees) from test group by user').show()
 ```
 
     user      max(fees)
@@ -208,7 +208,7 @@ bh.sql('select user, max(fees) from test group by user').show()
 
 目前导出的文件格式为tsv(即以tab符分隔字段的文件)
 ```python
-bh.sql("select age, sum(fees) from test group by age into outfile './result.tsv' format TSV").show()
+sql("select age, sum(fees) from test group by age into outfile './result.tsv' format TSV").show()
 ```
 
 
@@ -305,9 +305,9 @@ S代表规模，决定小数位数，取值范围是0～P
 #### 2.1.5 数组类型
 Array(T)，由 T 类型元素组成的数组。T 可以是任意类型，包含数组类型。但不推荐使用多维数组，目前对多维数组的支持有限。
 
-    bh.sql("SELECT array(1, 2) AS x, toTypeName(x)").show()	
+    sql("SELECT array(1, 2) AS x, toTypeName(x)").show()	
     或者
-    bh.sql("SELECT [1, 2] AS x, toTypeName(x)").show()
+    sql("SELECT [1, 2] AS x, toTypeName(x)").show()
     -- 结果输出
     x      toTypeName(array(1, 2))
     -----  -------------------------
@@ -316,7 +316,7 @@ Array(T)，由 T 类型元素组成的数组。T 可以是任意类型，包含�
 
 需要注意的是，数组元素中如果存在Null值，则元素类型将变为Nullable。
 
-    bh.sql("SELECT array(1, 2, NULL) AS x, toTypeName(x)").show()
+    sql("SELECT array(1, 2, NULL) AS x, toTypeName(x)").show()
     -- 结果输出
     x           toTypeName(array(1, 2, NULL))
     ----------  -------------------------------
@@ -324,7 +324,7 @@ Array(T)，由 T 类型元素组成的数组。T 可以是任意类型，包含�
 
 另外，数组类型里面的元素必须具有相同的数据类型，否则会报异常
 
-    bh.sql("SELECT array(1, 'a')").show()
+    sql("SELECT array(1, 'a')").show()
     -- 报异常
     DB::Exception: There is no supertype for types UInt8, String because some of them are String/FixedString and some of them are not
 
@@ -333,22 +333,22 @@ Array(T)，由 T 类型元素组成的数组。T 可以是任意类型，包含�
 
 -- 建表
 
-	bh.sql("CREATE TABLE t_enum (x Enum8('hello' = 1, 'world' = 2)) Engine=Memory").show()
+	sql("CREATE TABLE t_enum (x Enum8('hello' = 1, 'world' = 2)) Engine=Memory").show()
 
 
 -- INSERT数据
 
-    bh.sql("INSERT INTO t_enum VALUES ('hello'), ('world'), ('hello')").show()
+    sql("INSERT INTO t_enum VALUES ('hello'), ('world'), ('hello')").show()
 
 -- 如果定义了枚举类型值之后，不能写入其他值的数据
 
-    bh.sql("INSERT INTO t_enum values('a')").show()
+    sql("INSERT INTO t_enum values('a')").show()
     -- 报异常：Unknown element 'a' for type Enum8('hello' = 1, 'world' = 2)
 
 #### 2.1.7 Tuple类型
 Tuple(T1, T2, ...)，元组，与Array不同的是，Tuple中每个元素都有单独的类型，不能在表中存储元组（除了内存表）。它们可以用于临时列分组。在查询中，IN表达式和带特定参数的 lambda 函数可以来对临时列进行分组。
 
-    bh.sql("SELECT tuple(1,'a') AS x, toTypeName(x)").show()
+    sql("SELECT tuple(1,'a') AS x, toTypeName(x)").show()
    --结果输出
     
     x        toTypeName(tuple(1, 'a'))
@@ -357,13 +357,13 @@ Tuple(T1, T2, ...)，元组，与Array不同的是，Tuple中每个元素都有�
 
    -- 建表
     
-    bh.sql("CREATE TABLE t_tuple(c1 Tuple(String,Int8))").show()
+    sql("CREATE TABLE t_tuple(c1 Tuple(String,Int8))").show()
    -- INSERT数据
 
-    bh.sql("INSERT INTO t_tuple VALUES(('jack',20))").show()
+    sql("INSERT INTO t_tuple VALUES(('jack',20))").show()
    -- 查询数据
     
-    bh.sql("SELECT * FROM t_tuple").show()
+    sql("SELECT * FROM t_tuple").show()
    -- 结果输出
     
     c1
@@ -371,7 +371,7 @@ Tuple(T1, T2, ...)，元组，与Array不同的是，Tuple中每个元素都有�
     ('jack',20)
 -- 如果插入数据类型不匹配，会报异常
     
-    bh.sql("INSERT INTO t_tuple VALUES(('tom','xxx'))").show()
+    sql("INSERT INTO t_tuple VALUES(('tom','xxx'))").show()
     Code: 6. DB::Exception: Cannot parse string 'xxx' as Int8:
 
 #### 2.1.8 特殊数据类型
@@ -380,12 +380,12 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 
 -- 建表
 
-    bh.sql("CREATE TABLE t_null(x Int8, y Nullable(Int8)) engine=Memory").show()
+    sql("CREATE TABLE t_null(x Int8, y Nullable(Int8)) engine=Memory").show()
 
 -- 写入数据
 
-    bh.sql("INSERT INTO t_null VALUES (1, NULL), (2, 3)").show()
-    bh.sql("SELECT x + y FROM t_null").show()
+    sql("INSERT INTO t_null VALUES (1, NULL), (2, 3)").show()
+    sql("SELECT x + y FROM t_null").show()
 
 -- 结果
 
@@ -409,8 +409,8 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 	
 示例:
 
-	import blackhole as bh
-	bh.sql("create table if not exists test (user String,age Int32,fees Float32) Engine=MergeTree() order by tuple()")
+	from dae import sql
+	sql("create table if not exists test (user String,age Int32,fees Float32) Engine=MergeTree() order by tuple()")
 	
 
 #### 方式2
@@ -419,9 +419,9 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 	
 示例:
 
-	import blackhole as bh
-	bh.sql("create database db2")
-	bh.sql("create table if not exists db2.test as default.test Engine=MergeTree() order by tuple() ")
+	from dae import sql
+	sql("create database db2")
+	sql("create table if not exists db2.test as default.test Engine=MergeTree() order by tuple() ")
 	
 
 #### 方式3
@@ -430,8 +430,8 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 
 示例:
 
-	import blackhole as bh
-	bh.sql("create table if not exists test2 ENGINE=MergeTree() order by tuple() as select * from test")
+	from dae import sql
+	sql("create table if not exists test2 ENGINE=MergeTree() order by tuple() as select * from test")
 
 
 其中ENGINE一般指定为MergeTree()，并且还需要指定排序键，例如：
@@ -452,8 +452,8 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 	INSERT INTO [db.]table [(c1, c2, c3)] VALUES (v11, v12, v13), ...
 示例:
 
-	import blackhole as bh
-	bh.sql("insert into table test values ('Jack', 32, 23567)")
+	from dae import sql
+	sql("insert into table test values ('Jack', 32, 23567)")
 
 #### 方式2
 
@@ -461,8 +461,8 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 
 示例:
 
-	import blackhole as bh
-	bh.sql("insert into table test2 select * from test")
+	from dae import sql
+	sql("insert into table test2 select * from test")
 
 #### 方式3
 
@@ -470,8 +470,8 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 	
 示例:
 	
-	import blackhole as bh
-	bh.sql("insert into table test from infile './test.csv' format CSV")
+	from dae import sql
+	sql("insert into table test from infile './test.csv' format CSV")
 
 
 ### 2.4 数据查询
@@ -497,13 +497,13 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 
 #### 从数据表查询
 
-    import blackhole as bh
-    bh.sql("select * from test").show()
+    from dae import sql
+    sql("select * from test").show()
 
 #### 从外部文件查询
 
-	import blackhole as bh
-	bh.sql("select * from file('./test.csv','CSV','name String, age Int32, fees Float32')").show()
+	from dae import sql
+	sql("select * from file('./test.csv','CSV','name String, age Int32, fees Float32')").show()
 
 #### 查询子句
 **DISTINCT**
@@ -587,9 +587,9 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 #### 2.5.1 直接展示
 示例：
 
-    import blackhole as bh
+    from dae import sql
     query_sql = 'select * from test_table'
-    bh.sql(query_sql).show()
+    sql(query_sql).show()
 
 默认打印前100行
 
@@ -597,17 +597,17 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 示例：
 
     query_sql = "select * from test_table into outfile './temp.csv'  Format CSV"
-    bh.sql(query_sql).show()
+    sql(query_sql).show()
 
 保存为csv文件
 
 ----------
 ## 3. SQLTable 与 DataFrame 互转
 
-### 3.1 SQLTable 转换为 Jarvis Dataframe
+### 3.1 SQLTable 转换为 DAE Dataframe
 
-    import blackhole as bh 
-    df = bh.sql('select * from test_table').to_df()
+    from dae import sql 
+    df = sql('select * from test_table').to_df()
 
 查询结果被转换成了dataframe，然后可以直接对dataframe执行相关操作，比如：
 	
@@ -616,38 +616,22 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 
 ### 3.2 SQLTable 转换为Pandas Dataframe
 
-	import blackhole as bh
-	pdf=bh.sql('select * from test_table'').to_pandas()
+	from dae import sql
+	pdf=sql('select * from test_table').to_pandas()
 
 查询结果被转换成了Pandas dataframe，然后可以直接对pdf执行Pandas的相关操作，比如：
 
     pdf.info()
 
-### 3.3 Jarvis Dataframe 转换为 SQLTable
+### 3.3  DAE Dataframe 转换为 SQLTable
 
-    import blackhole as bh
-    from blackhole.sql.dataset import Dataset
-    import pyarrow as pa
-    arrow_obj = pa.Table.from_pydict({
-                "A": [3, 7, 11, 4],
-                "B": [True, False, True, False],
-                "C": [1.1, -2.5, 23, 0],
-                "D": [2, 3, 4, -1],
-                "E": ['make', 'love', 'not', 'war'],
-            }, schema = pa.schema([
-                pa.field("A", pa.int64()),
-                pa.field("B", pa.bool_()),
-                pa.field("C", pa.float64()),
-                pa.field("D", pa.int8()),
-                pa.field("E", pa.string())
-            ]))
-    import blackhole.dataframe as ks
-    df = ks.from_arrow(arrow_obj)
-    ds = Dataset()
-    table_name = ds.from_df(df)
-    bh.sql("select * from {}".format(table_name)).show()
+    from dae import sql
+	import pandas as pd
+	data = [['Google',22],['baidu',20],['Wiki',13]]
+	df = pd.DataFrame(data,columns=['Site','Age'], dtype=float)
+	ds = sql('select *FROM {df}').show()
 
-将一个dataframe对象转换成了一个sqltable，并返回了表名，然后可以通过表名使用sql对表进行查询。
+可以用sql语句直接查询df。
 
 
 ​	
@@ -661,29 +645,29 @@ cache模块旨在通过缓存方式提升离线分析的性能，解决以下问
 
 ### 4.2 sql节点的cache操作
 
-    import blackhole as bh
+    from dae import sql, cache, uncache
     
-    t1 = bh.sql('SELECT * FROM table1')
-    t2 = bh.sql('SELECT * FROM table2')
+    t1 = sql('SELECT * FROM table1')
+    t2 = sql('SELECT * FROM table2')
     
     # 缓存t1、t2节点
     t1.cache()
     t2.cache()
     
     # 后续sql的操作，在使用t1、t2节点时，会复用对应节点的缓存
-    t3 = bh.sql('SELECT * from {t1} join on {t2}')
+    t3 = sql('SELECT * from {t1} join on {t2}')
     t3.show()
     
     # cache的管理：支持LRU策略下的自动cache清除，同时也支持手动清除所有cache
-    bh.uncache() # 手动清除所有cache的操作
+    uncache() # 手动清除所有cache的操作
 
 ### 4.3 函数节点的cache操作
 
-    import blackhole as bh
+    from dae import sql
     import time
     
-    # 使用bh.cache()装饰器，可以使任意python函数具备cache能力
-    @bh.cache()
+    # 使用cache()装饰器，可以使任意python函数具备cache能力
+    @cache()
     def expensive_cal(x, y):
         time.sleep(5)
         return x + y
@@ -702,33 +686,33 @@ cache模块旨在通过缓存方式提升离线分析的性能，解决以下问
 ## 5. 外部数据对接
 ### 5.1 DAE数据对接 
 本节只针对安装了DAE集群组件的用户，DAE单机用户请忽略。
-DAE集群的数据，可以认为是一种特殊形式的catalog，catalog内置在Jarvis中。使用方式如下：
+DAE集群的数据，可以认为是一种特殊形式的catalog，catalog内置在DAE中。使用方式如下：
 
 
-    bh.sql("show catalogs").show()
+    sql("show catalogs").show()
     _ _ _ _ _
     dae
     
-    bh.sql("show databases from dae").show()
+    sql("show databases from dae").show()
     _ _ _ _ _
     db1
     db2
     
-    bh.sql("create database my_db1 from dae.db1").show()
+    sql("create database my_db1 from dae.db1").show()
     _ _ _ _ _
     create my_db1 success
     
     #接下来，可以访问本地的my_db1中的table数据: *
-    bh.sql("select * from my_db1.table1").show()
+    sql("select * from my_db1.table1").show()
     
-    #除了直接sql分析，也可以将数据“取数”到Pandas Dataframe或Blackhole Dataframe：
-    df = bh.sql("select * from my_db1.table1").to_pandas()
-    df = bh.sql("select * from my_db1.table1").to_df()
+    #除了直接sql分析，也可以将数据“取数”到Pandas Dataframe或DAE Dataframe：
+    df = sql("select * from my_db1.table1").to_pandas()
+    df = sql("select * from my_db1.table1").to_df()
     
     #然后可以按python dataframe方式做计算
     df = df[df.col1 > 4]     
     
-    *说明：除了create database 也可以单独创建一张表：bh.sql("create table my_tb1 from dae.db1.table1").show()
+    *说明：除了create database 也可以单独创建一张表：sql("create table my_tb1 from dae.db1.table1").show()
 
 ### 5.2 Iceberg对接
 #### 5.2.1 iceberg-catalog支持
@@ -742,9 +726,9 @@ DAE集群的数据，可以认为是一种特殊形式的catalog，catalog内置
         category string)
     USING iceberg;
 
-jarvis 对应的表建立语句：
+DAE 对应的表建立语句：
 
-	bh.sql("CREATE TABLE icsc1 (id Int64,data String, category String) ENGINE=Iceberg('hdfs://localhost:8020/user/hive/warehouse/', 'Parquet','db','sc1','HADOOP')")
+	sql("CREATE TABLE icsc1 (id Int64,data String, category String) ENGINE=Iceberg('hdfs://localhost:8020/user/hive/warehouse/', 'Parquet','db','sc1','HADOOP')")
 
 其中Iceberg中有五个参数
 	param1：如果是FE模式，参数1代表 fe_ip:fe_rpc_port；如果是HADOOP模式，参数1代表warehouse url
@@ -764,7 +748,7 @@ iceberg表1：
 		    point struct<x:bigint,y:bigint>)
 		USING iceberg;
 
-jarvis表1：
+DAE表1：
 
 		CREATE TABLE ics2 (
 			id Int64, 
@@ -784,7 +768,7 @@ iceberg表2：（map->Map)
 	    point map<bigint,bigint>)
 	USING iceberg;
 
-jarvis表2：
+DAE表2：
 	
 	CREATE TABLE ics3 (
 		id Int64, 
@@ -813,9 +797,9 @@ iceberg表3：（array->Array)
 1.3.2版本会支持部分辅助数据下推
 
 ### 5.3 HIVE对接
-jarvis初步支持读取HIVE表数据
+DAE初步支持读取HIVE表数据
 
-    bh.sql("CREATE TABLE jarvis_hive_talbe (foo UInt32,bar String,city String) ENGINE=HIVE('hive-server:10003','test','hive_table1','CSV') partition by city;
+    sql("CREATE TABLE dae_hive_talbe (foo UInt32,bar String,city String) ENGINE=HIVE('hive-server:10003','test','hive_table1','CSV') partition by city;
 
     HIVE中的参数含义为
         参数1：hivemetastore url,
@@ -826,22 +810,22 @@ jarvis初步支持读取HIVE表数据
 
     HIVE外表schema需要和hive表本身schema一致；
 ### 5.4 HDFS对接
-jarvis支持读取写入HDFS外部表
+DAE支持读取写入HDFS外部表
 
-    bh.sql("CREATE TABLE hdfs_engine_table (name String, value UInt32) ENGINE=HDFS('hdfs://hdfs1:9000/other_storage', 'CSV')")
+    sql("CREATE TABLE hdfs_engine_table (name String, value UInt32) ENGINE=HDFS('hdfs://hdfs1:9000/other_storage', 'CSV')")
 
     HDFS中参数含义为
         参数1：hdfs中文件夹的地址
         参数2：文件类型,支持 CSV/Parquet
 
     读取、插入数据例子
-    bh.sql("INSERT INTO hdfs_engine_table VALUES ('one', 1), ('two', 2), ('three', 3)")
-    bh.sql("SELECT * FROM hdfs_engine_table LIMIT 2").show()
+    sql("INSERT INTO hdfs_engine_table VALUES ('one', 1), ('two', 2), ('three', 3)")
+    sql("SELECT * FROM hdfs_engine_table LIMIT 2").show()
 
 
 ### 5.5 MYSQL对接
     
-    bh.sql("CREATE TABLE jarvis_mysql_talbe (foo UInt32, bar String,city String) ENGINE=MySQL('host:port', 'database', 'table', 'user', 'password'[, replace_query, 'on_duplicate_clause'])")
+    sql("CREATE TABLE dae_mysql_talbe (foo UInt32, bar String,city String) ENGINE=MySQL('host:port', 'database', 'table', 'user', 'password'[, replace_query, 'on_duplicate_clause'])")
     ​参数含义为
         参数1：host:port — MySQL 服务器地址。
         参数2：database — 数据库的名称。
@@ -852,17 +836,17 @@ jarvis支持读取写入HDFS外部表
         参数7：'on_duplicate_clause' — 将 ON DUPLICATE KEY UPDATE 'on_duplicate_clause' 表达式添加到 INSERT 查询语句中。例如：impression = VALUES(impression) + impression。如果需要指定 'on_duplicate_clause'，则需要设置 replace_query=0。如果同时设置 replace_query = 1 和 'on_duplicate_clause'，则会抛出异常。
 
     此时，简单的 WHERE 子句（例如 =, !=, >, >=, <, <=）是在 MySQL 服务器上执行。
-    其余条件以及 LIMIT 采样约束语句仅在对MySQL的查询完成后才在Jarvis中执行。
+    其余条件以及 LIMIT 采样约束语句仅在对MySQL的查询完成后才在DAE中执行。
     MySQL 引擎不支持 可为空 数据类型，因此，当从MySQL表中读取数据时，NULL 将转换为指定列类型的默认值（通常为0或空字符串）。
 
-    与此同时，jarvis也支持MYSQL库引擎，如下所示
-    bh.sql("CREATE DATABASE [IF NOT EXISTS] db_name [ON CLUSTER cluster] ENGINE = MySQL('host:port', ['database' | database], 'user', 'password')")
+    与此同时，DAE也支持MYSQL库引擎，如下所示
+    sql("CREATE DATABASE [IF NOT EXISTS] db_name [ON CLUSTER cluster] ENGINE = MySQL('host:port', ['database' | database], 'user', 'password')")
 
 
 ### 5.6 MongoDB对接
 MongoDB 外表引擎是只读表引擎，允许从远程 MongoDB 集合中读取数据(SELECT查询)。引擎只支持非嵌套的数据类型。不支持 INSERT 查询。
 
-    bh.sql("CREATE TABLE [IF NOT EXISTS] [db.]table_name(name1 [type1],name2 [type2]) ENGINE = MongoDB(host:port, database, collection, user, password)")
+    sql("CREATE TABLE [IF NOT EXISTS] [db.]table_name(name1 [type1],name2 [type2]) ENGINE = MongoDB(host:port, database, collection, user, password)")
 
     ​参数含义为
         参数1：host:port — MongoDB 服务器地址.
@@ -872,7 +856,7 @@ MongoDB 外表引擎是只读表引擎，允许从远程 MongoDB 集合中读取
         参数5：password — 用户密码.
 
 ### 5.7 S3对接
-    bh.sql("CREATE TABLE s3_engine_table (name String, value UInt32) ENGINE = S3(path, [aws_access_key_id, aws_secret_access_key,] format, [compression])")
+    sql("CREATE TABLE s3_engine_table (name String, value UInt32) ENGINE = S3(path, [aws_access_key_id, aws_secret_access_key,] format, [compression])")
     ​参数含义为
         参数1：path — 带有文件路径的 Bucket url。在只读模式下支持以下通配符: *, ?, {abc,def} 和 {N..M} 其中 N, M 是数字, 'abc', 'def' 是字符串. 更多信息见下文.
         参数2：format — 文件的格式.
@@ -884,7 +868,7 @@ MongoDB 外表引擎是只读表引擎，允许从远程 MongoDB 集合中读取
     SELECT * FROM s3_engine_table LIMIT 2;
 
 ### 5.8 Kafka对接
-    bh.sql("CREATE TABLE kafka_engine_table (name String, value UInt32) ENGINE = Kafka(kafka_broker_list, kafka_topic_list, kafka_group_name, kafka_format[, kafka_row_delimiter, kafka_schema, kafka_num_consumers])")
+    sql("CREATE TABLE kafka_engine_table (name String, value UInt32) ENGINE = Kafka(kafka_broker_list, kafka_topic_list, kafka_group_name, kafka_format[, kafka_row_delimiter, kafka_schema, kafka_num_consumers])")
 
     必要参数：
         kafka_broker_list – 以逗号分隔的 brokers 列表 (localhost:9092)。
@@ -898,9 +882,9 @@ MongoDB 外表引擎是只读表引擎，允许从远程 MongoDB 集合中读取
         kafka_num_consumers – 单个表的消费者数量。默认值是：1，如果一个消费者的吞吐量不足，则指定更多的消费者。消费者的总数不应该超过 topic 中分区的数量，因为每个分区只能分配一个消费者。
 
 ### 5.9 PostgreSQL对接
-PostgreSQL 引擎允许 jarvis 对存储在远程 PostgreSQL 服务器上的数据执行 SELECT 和 INSERT 查询.
+PostgreSQL 引擎允许 DAE 对存储在远程 PostgreSQL 服务器上的数据执行 SELECT 和 INSERT 查询.
 
-    bh.sql("CREATE TABLE [IF NOT EXISTS] [db.]table_name [ON CLUSTER cluster](name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1] [TTL expr1]) ENGINE = PostgreSQL('host:port', 'database', 'table', 'user', 'password'[, `schema`])")
+    sql("CREATE TABLE [IF NOT EXISTS] [db.]table_name [ON CLUSTER cluster](name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1] [TTL expr1]) ENGINE = PostgreSQL('host:port', 'database', 'table', 'user', 'password'[, `schema`])")
 
     ​参数含义为
         host:port — PostgreSQL 服务器地址.
@@ -911,16 +895,16 @@ PostgreSQL 引擎允许 jarvis 对存储在远程 PostgreSQL 服务器上的数�
         schema — Non-default table schema. 可选.
 
     创建、select 例子
-    bh.sql("CREATE TABLE default.postgresql_table(`float_nullable` Nullable(Float32),`str` String,`int_id` Int32) ENGINE = PostgreSQL('localhost:5432', 'public', 'test', 'postges_user', 'postgres_password')")
-    bh.sql("SELECT * FROM postgresql_table WHERE str IN ('test')").show()
+    sql("CREATE TABLE default.postgresql_table(`float_nullable` Nullable(Float32),`str` String,`int_id` Int32) ENGINE = PostgreSQL('localhost:5432', 'public', 'test', 'postges_user', 'postgres_password')")
+    sql("SELECT * FROM postgresql_table WHERE str IN ('test')").show()
 
-    与此同时，jarvis也支持PostgreSQL库引擎，如下所示
-    bh.sql("CREATE DATABASE test_database ENGINE = PostgreSQL('host:port', 'database', 'user', 'password'[, `use_table_cache`]);")
+    与此同时，DAE也支持PostgreSQL库引擎，如下所示
+    sql("CREATE DATABASE test_database ENGINE = PostgreSQL('host:port', 'database', 'user', 'password'[, `use_table_cache`]);")
         use_table_cache — 定义数据库表结构是否已缓存或不进行。可选的。默认值： 0.
 
 ### 5.10 EmbeddedRocksDB对接
     
-    bh.sql("CREATE TABLE [IF NOT EXISTS] [db.]table_name [ON CLUSTER cluster](name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1]) ENGINE = EmbeddedRocksDB PRIMARY KEY(primary_key_name)")
+    sql("CREATE TABLE [IF NOT EXISTS] [db.]table_name [ON CLUSTER cluster](name1 [type1] [DEFAULT|MATERIALIZED|ALIAS expr1]) ENGINE = EmbeddedRocksDB PRIMARY KEY(primary_key_name)")
 
     必要参数:
         primary_key_name – any column name in the column list.
@@ -929,14 +913,14 @@ PostgreSQL 引擎允许 jarvis 对存储在远程 PostgreSQL 服务器上的数�
         带有键 equals 或 in 过滤的查询将被优化为从 rocksdb 进行多键查询.
 
     例子
-    bh.sql("CREATE TABLE test(`key` String,`v1` UInt32) ENGINE = EmbeddedRocksDBPRIMARY KEY key")
+    sql("CREATE TABLE test(`key` String,`v1` UInt32) ENGINE = EmbeddedRocksDBPRIMARY KEY key")
 
 ### 5.11 Catalog管理外部数据
 #### 5.11.1 Catalog的定义
 Catalog功能，一般需要运维人员参与，普通用户可以忽略。如果运维人员已完成了catalog配置，用户可跳到第3、4小节查看使用方法。
 待分析的数据，可能分布在HIVE、HDFS、MySQL、BOS等不同的系统中（如上述章节所属）。Catalog功能，可帮用户集中管理外部数据源：管理用户可用的数据库和表的目录结构，给用户一个全局的数据视图，在引入外部数据和联邦查询中有重要作用。
 Catalog功能有三个功能：可以解耦数据提供方和使用方；可以简化数据使用流程；可以避免直接配置密码、避免安全问题。
-Catalog表示一个数据来源，可以包含来自不同系统的数据库和表，比如customer_catalog表示分析用户购买行为相关的数据源，其中包含来自MySQL的order_db和HIVE的customer_history_info_db等，通过联合分析MySQL order_db.order_list和HIVE customer_history_info_db.show_list来分析用户的喜好。所有分析师，只需要**配置Catalog源**的信息（比如http server的访问信息），就能看到这些数据库和表，就可以：**展示Catalog包含的Databases和Tables**，**从Catalog源导入某Database或Table** 到Jarvis里做分析。
+Catalog表示一个数据来源，可以包含来自不同系统的数据库和表，比如customer_catalog表示分析用户购买行为相关的数据源，其中包含来自MySQL的order_db和HIVE的customer_history_info_db等，通过联合分析MySQL order_db.order_list和HIVE customer_history_info_db.show_list来分析用户的喜好。所有分析师，只需要**配置Catalog源**的信息（比如http server的访问信息），就能看到这些数据库和表，就可以：**展示Catalog包含的Databases和Tables**，**从Catalog源导入某Database或Table** 到DAE里做分析。
         
 #### 5.11.2 配置Catalog源
 本步骤一般由运维人员完成。
@@ -975,33 +959,33 @@ Catalog源的配置文件，是dae的运行目录下的.jarvis/catalog_conf.json
 
    
 其中http_catalog/mysql_db/conn_info.json  内容如下: （password需要base64编码）
-
-    {
-        "type": "MySQL",  #database类型，可以为BOS/HIVE/Iceberg/MySQL/..
-        "host_port": "host:port",  #MySQL的服务host,post
-        "user": "mysql_user",  
-        "password": "mysql_password_base64_encode",
-        "format": {
-              "table1": "CSV"  #CSV/Parquet等格式
-        }
+```json
+{
+    "type": "MySQL",  #database类型，可以为BOS/HIVE/Iceberg/MySQL/..
+    "host_port": "host:port",  #MySQL的服务host,post
+    "user": "mysql_user",  
+    "password": "mysql_password_base64_encode",
+    "format": {
+         "table1": "CSV"  #CSV/Parquet等格式
     }
-
+}
+```
 #### 5.11.3 展示Catalog包含的Databases和Tables
 catalog在database上一级，SHOW命令：
-		
-		bh.sql("SHOW DATABASES FROM http_catalog") 
-		bh.sql("SHOW TABLES FROM http_catalog.db1") 
-		bh.sql("DESC http_catalog.db1.table1") 
-
+```python
+sql("SHOW DATABASES FROM http_catalog") 
+sql("SHOW TABLES FROM http_catalog.db1") 
+sql("DESC http_catalog.db1.table1") 
+```
 #### 5.11.4 从Catalog源导入Database或Table
-
-		bh.sql("CREATE DATABASE mydb1 FROM http_catalog.db1")
-		bh.sql("CREATE TABLE mytable1 FROM http_catalog.db1.table1')")
-
+```python
+sql("CREATE DATABASE mydb1 FROM http_catalog.db1")
+sql("CREATE TABLE mytable1 FROM http_catalog.db1.table1')")
+```
 导入后，可以按本地库或表一样访问外部数据： （但数据仍然在远端数据源，可结合cache把远端数据源缓存在本地、来加快查询速度）
-		
-		bh.sql("SHOW TABLES FROM mydb1")
-		bh.sql("SELECT * FROM mytable1")
-		bh.sql("DROP mydb1")
-
+```python	
+sql("SHOW TABLES FROM mydb1")
+sql("SELECT * FROM mytable1")
+sql("DROP mydb1")
+```
 ****
