@@ -44,13 +44,13 @@ DAE 数据分析提供两种数据类型，*Series* 和 *DataFrame*。
 # 1. 如何导入DAE数据分析库？
 
 大家经常看到Pandas的导入方法是“import pandas as pd”，而DAE接口对齐了Pandas 90%以上的方法和属性，  
-所以 **对于很多Pandas程序只要将“import pandas as pd” 替换成 “import blackhole.dataframe as pd”** ,  
+所以 **对于很多Pandas程序只要将“import pandas as pd” 替换成 “import dae.dataframe as pd”** ,  
 一句代码修改就可以体验的超大数据处理能力和加速效果。  
-当然你也可以命名为任何你喜欢的名字，比如“import blackhole.dataframe as bhdf”。
+当然你也可以命名为任何你喜欢的名字，比如“import dae.dataframe as bhdf”。
 
 
 ```python
-import blackhole.dataframe as pd
+import dae.dataframe as pd
 ```
 
 
@@ -58,7 +58,7 @@ import blackhole.dataframe as pd
 # 2. 如何导入数据？
 
 在对数据进行修改、探索和分析之前，我们得先导入数据，主要通过 **read_csv 或者 read_parquet** 方法。  
-**read_csv**是导入常见的csv格式的数据集，而**read_parquet**是导入常见的parquet格式的数据集，这两个操作都返回一个DAE的Dataframe对象（blackhole.dataframe.frame.DataFrame）。    
+**read_csv**是导入常见的csv格式的数据集，而**read_parquet**是导入常见的parquet格式的数据集，这两个操作都返回一个DAE的Dataframe对象（dae.dataframe.frame.DataFrame）。    
     
     
 **相比Pandas的read_csv和read_parquet，读取大数据量文件的时候，DAE能够加速10倍以上，内存可以节省5倍以上**。
@@ -76,7 +76,7 @@ type(df)
 
 
 
-    blackhole.dataframe.frame.DataFrame
+    dae.dataframe.frame.DataFrame
 
 
 
@@ -93,7 +93,7 @@ type(df2)
 
 
 
-    blackhole.dataframe.frame.DataFrame
+    dae.dataframe.frame.DataFrame
 
 
 
@@ -359,7 +359,7 @@ df.head(5)
 df.info()
 ```
 
-    <class 'blackhole.dataframe.frame.DataFrame'>
+    <class 'dae.dataframe.frame.DataFrame'>
     Index: 33 entries, 0 to 32
     Data columns (total 7 columns):
      #   Column          Non-Null Count  Dtype 
@@ -908,7 +908,7 @@ df.loc['2000/01']
 
 ## 3.8 排序
 
-排序通常会很有用，在 blackhole 中，我们可以对 dataframe 调用 sort_values 方法进行排序。
+排序通常会很有用，在 dae 中，我们可以对 dataframe 调用 sort_values 方法进行排序。
 
 
 ```python
@@ -1602,7 +1602,7 @@ uk_jpn_rain.head(5)
 
 
 ```python
-# Using blackhole to quickly plot graphs
+# Using dae to quickly plot graphs
 uk_jpn_rain['rain_octsep_x'].plot(kind='bar', colormap='Paired')
 ```
 
