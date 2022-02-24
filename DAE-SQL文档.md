@@ -643,7 +643,54 @@ cache模块旨在通过缓存方式提升离线分析的性能，解决以下问
 * 远程数据缓存至本地：在很多离线分析场景下，数据可能是在远程存储上，频繁从远程拉取数据成本高。通过cache可将数据缓存至本地，提升离线分析性能。
 * 同时，cache模块也支持对python函数的缓存
 
-### 4.2 sql节点的cache操作
+### 4.2 DataFlow场景下sql节点的cache
+
+    from dae import sql
+    from dae.sql.dag.decorator import Op, Cache
+
+    @Op
+    @Cache # t1节点被缓存
+    def t1():
+        return sql('select * from table1')
+
+    @Op
+    @Cache # t2节点被缓存
+    def t2():
+        return sql('select * from table2')
+
+    @op
+    def t3():
+        ‘’‘
+        后续sql的操作，在使用t1、t2节点时，会复用对应节点的缓存
+        ’‘’
+        return sql('SELECT * from {t1} join on {t2}')
+    
+    # 运行t3节点
+    t3()
+
+### 4.3 函数节点的cache操作
+
+    from dae import sql, Cache
+    import time
+    
+    # 使用Cache装饰器，可以使任意python函数具备cache能力
+    @Cache
+    def expensive_cal(x, y):
+        time.sleep(5)
+        return x + y
+    
+    #首次运行expensive_cal函数，耗时5s+，同时结果被缓存
+    expensive_cal(1, 1)
+    
+    # 再次运行expensive_val函数，直接返回缓存结果，耗时在毫秒级
+    expensive_cal(1, 1)
+    
+    # 改变入参，重新运行expensive_cal，cache miss，耗时5s+，同时结果再次被缓存
+    expensive_cal(1, 2)
+    
+    # 说明：当函数的入参、函数体、函数依赖的外部变量以及函数依赖的外部函数，任意一项发生变化时，则函数cahce会miss，并重新缓存，以保证函数结果的准确。
+
+### 4.4 sql节点的cache操作
 
     from dae import sql, cache, uncache
     
@@ -661,27 +708,6 @@ cache模块旨在通过缓存方式提升离线分析的性能，解决以下问
     # cache的管理：支持LRU策略下的自动cache清除，同时也支持手动清除所有cache
     uncache() # 手动清除所有cache的操作
 
-### 4.3 函数节点的cache操作
-
-    from dae import sql
-    import time
-    
-    # 使用cache()装饰器，可以使任意python函数具备cache能力
-    @cache()
-    def expensive_cal(x, y):
-        time.sleep(5)
-        return x + y
-    
-    #首次运行expensive_cal函数，耗时5s+，同时结果被缓存
-    expensive_cal(1, 1)
-    
-    # 再次运行expensive_val函数，直接返回缓存结果，耗时在毫秒级
-    expensive_cal(1, 1)
-    
-    # 改变入参，重新运行expensive_cal，cache miss，耗时5s+，同时结果再次被缓存
-    expensive_cal(1, 2)
-    
-    # 说明：当函数的入参、函数体、函数依赖的外部变量以及函数依赖的外部函数，任意一项发生变化时，则函数cahce会miss，并重新缓存，以保证函数结果的准确。
 
 ## 5. 外部数据对接
 ### 5.1 DAE数据对接 
