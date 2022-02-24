@@ -634,6 +634,38 @@ Nullable类型表示某个基础数据类型可以是Null值。其具体用法�
 可以用sql语句直接查询df。
 
 
+### 3.4  DAE DAG 模式 Dataframe 转换为 SQLTable
+`@op`装饰器可以将普通Python函数转化为执行的节点，同时支持断点续跑，如果上下游节点都为SQL，会自动优化相关SQL逻辑（除@op外，还支持@cache，具体参考4.1中）
+
+```python
+import dae
+from dae import dataframe as pd
+from dae.sql.dag import cache, op
+
+@op
+def df_site():
+    data = [['Google',23, 'system'],['Baidu',22, 'system'], ['qq',24, 'system'], ['iqiyi',10, 'system']]
+    df = pd.DataFrame(data,columns=['site','age', 'database'])
+    return df
+
+@op
+def database(test='system.columns'):
+    return sql('select *FROM {test}')
+
+database_name = 'system'
+
+@op
+def show_websites(age=10, limit=10):
+    return sql('''SELECT 
+    distinct(site), age, database 
+    FROM {df_site()} as site
+    INNER JOIN {database()} as c
+    ON(site.database=c.database) 
+    WHERE age>{age}
+    LIMIT {limit}
+    ''')
+```
+
 ​	
 ## 4.  Cache
 ### 4.1 Cache的作用
@@ -663,7 +695,7 @@ cache模块旨在通过缓存方式提升离线分析的性能，解决以下问
         ‘’‘
         后续sql的操作，在使用t1、t2节点时，会复用对应节点的缓存
         ’‘’
-        return sql('SELECT * from {t1} join on {t2}')
+        return sql('SELECT * from {t1} AS t1 join {t2} AS t2 on (t1.name = t2.name)')
     
     # 运行t3节点
     t3()
