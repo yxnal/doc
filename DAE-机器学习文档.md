@@ -124,8 +124,8 @@ import blackhole.dataframe as bhdf
 data = bhdf.read_csv('./train.csv')
 
 # 划分训练集和测试集
-from blackhole.model_selection import train_test_split
-X, y = data[:, 0:-1], data[:, -1]
+from blackhole.ml.model_selection import train_test_split
+X, y = data.iloc[:, 0:-1], data.iloc[:, -1]
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
 # 模型训练
@@ -1103,11 +1103,13 @@ DAE ml保存模型方法。
     * model: 待保存模型
     * file_path: str，
         模型的保存路径
+    * pmml: bool, 支持将树基模型（GBDT、RandomForest、XGB）保存为pmml格式
+    * json: bool, 支持将树基模型（GBDT、RandomForest、XGB）保存为json格式
 
 * example
 ```python
 from blackhole.ml import save_model
-save_model(model, './model')
+save_model(model, './model', pmml=True)
 ```
 
 
