@@ -678,14 +678,14 @@ cache模块旨在通过缓存方式提升离线分析的性能，解决以下问
 ### 4.2 DataFlow场景下sql节点的cache
 
     from dae import sql
-    from dae.sql.dag.decorator import Op, Cache
+    from dae.sql.dag import cache, op
 
-    @Op
-    @Cache # t1节点被缓存
+    @op
+    @cache # t1节点被缓存
     def t1():
         return sql('select * from table1')
 
-    @Op
+    @op
     @Cache # t2节点被缓存
     def t2():
         return sql('select * from table2')
