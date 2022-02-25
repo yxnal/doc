@@ -686,7 +686,7 @@ cache模块旨在通过缓存方式提升离线分析的性能，解决以下问
         return sql('select * from table1')
 
     @op
-    @Cache # t2节点被缓存
+    @cache # t2节点被缓存
     def t2():
         return sql('select * from table2')
 
@@ -705,8 +705,8 @@ cache模块旨在通过缓存方式提升离线分析的性能，解决以下问
     from dae import sql, Cache
     import time
     
-    # 使用Cache装饰器，可以使任意python函数具备cache能力
-    @Cache
+    # 使用cache装饰器，可以使任意python函数具备cache能力
+    @cache
     def expensive_cal(x, y):
         time.sleep(5)
         return x + y
