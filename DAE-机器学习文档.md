@@ -120,16 +120,16 @@ train_url = (
 urllib.request.urlretrieve(train_url, 'train.csv')
 
 # 加载数据集
-import blackhole.dataframe as bhdf
+import dae.dataframe as bhdf
 data = bhdf.read_csv('./train.csv')
 
 # 划分训练集和测试集
-from blackhole.ml.model_selection import train_test_split
+from dae.ml.model_selection import train_test_split
 X, y = data.iloc[:, 0:-1], data.iloc[:, -1]
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
 # 模型训练
-from blackhole.ml.ensemble import RandomForestClassifier
+from dae.ml.ensemble import RandomForestClassifier
 model = RandomForestClassifier(n_estimators=50, max_depth=20)
 model.fit(X_train, y_train)
 
@@ -240,7 +240,7 @@ y_pred_proba = model.predict_proba(X_test)
 * example
 ```python
 # 模型训练
-from blackhole.ml.ensemble import RandomForestRegressor
+from dae.ml.ensemble import RandomForestRegressor
 model = RandomForestRegressor(n_estimators=50, max_depth=20)
 model.fit(X_train, y_train)
 
@@ -351,7 +351,7 @@ y_pred = model.predict(X_test)
 * example
 ```python
 # 模型训练
-from blackhole.ml.ensemble import GradientBoostingClassifier
+from dae.ml.ensemble import GradientBoostingClassifier
 model = GradientBoostingClassifier(n_estimators=50, max_depth=5)
 model.fit(X_train, y_train)
 
@@ -462,7 +462,7 @@ y_pred = model.predict(X_test)
 * example
 ```python
 # 模型训练
-from blackhole.ml.ensemble import GradientBoostingRegressor
+from dae.ml.ensemble import GradientBoostingRegressor
 model = GradientBoostingRegressor(n_estimators=50, max_depth=5)
 model.fit(X_train, y_train)
 
@@ -570,7 +570,7 @@ xgboost分类算法.
 * example
 ```python
 # 模型训练
-from blackhole.ml.ensemble import XGBClassifier
+from dae.ml.ensemble import XGBClassifier
 model = XGBClassifier(n_estimators=50, max_depth=6)
 model.fit(X_train, y_train)
 
@@ -678,7 +678,7 @@ xgboost 回归算法
 * example
 ```python
 # 模型训练
-from blackhole.ml.ensemble import XGBRgressor
+from dae.ml.ensemble import XGBRgressor
 model = XGBRgressor(n_estimators=50, max_depth=6)
 model.fit(X_train, y_train)
 
@@ -800,7 +800,7 @@ adaboost树回归算法
 * example
 ```python
 # 模型训练
-from blackhole.ml.linear_model import LogisticRegression
+from dae.ml.linear_model import LogisticRegression
 model = LogisticRegression(penalty='l2')
 model.fit(X_train, y_train)
 
@@ -871,7 +871,7 @@ Lasso回归算法
 * example
 ```python
 # 模型训练
-from blackhole.ml.naive_bayes import GaussianNB
+from dae.ml.naive_bayes import GaussianNB
 model = GaussianNB()
 model.fit(X_train, y_train)
 
@@ -943,7 +943,7 @@ y_pred = model.predict(X_test)
 * example
 ```python
 # 模型训练
-from blackhole.ml.svm import SVC
+from dae.ml.svm import SVC
 model = SVC()
 model.fit(X_train, y_train)
 
@@ -984,7 +984,7 @@ y_pred = model.predict(X_test)
 * example
 ```python
 # 模型训练
-from blackhole.ml.decomposition import PCA
+from dae.ml.decomposition import PCA
 model = PCA()
 model.fit(X_train)
 
@@ -1032,7 +1032,7 @@ y_pred = model.predict(X_test)
 * example
 ```python
 # 模型训练
-from blackhole.ml.ensemble import IsolationForest
+from dae.ml.ensemble import IsolationForest
 model = IsolationForest()
 model.fit(X_train)
 
@@ -1089,7 +1089,7 @@ K-Means聚类算法
 * example
 ```python
 # 模型训练
-from blackhole.ml.cluster import KMeans
+from dae.ml.cluster import KMeans
 model = KMeans()
 model.fit(X_train)
 
@@ -1108,7 +1108,7 @@ DAE ml保存模型方法。
 
 * example
 ```python
-from blackhole.ml import save_model
+from dae.ml import save_model
 save_model(model, './model', pmml=True)
 ```
 
@@ -1121,7 +1121,7 @@ DAE ml加载模型方法。
 
 * example
 ```python
-from blackhole.ml import load_model
+from dae.ml import load_model
 model = load_model('./model')
 ```
 
@@ -1151,7 +1151,7 @@ DAE ML加载数据文件的方法，支持CSV、Parquet、ORC等多种数据格�
 
 * example
 ```python
-from blackhole.ml.datasets import load_file
+from dae.ml.datasets import load_file
 
 data = load_file('./train.csv') 
 ```
